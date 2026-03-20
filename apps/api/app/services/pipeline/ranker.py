@@ -120,5 +120,4 @@ class RankingEngine:
             current = deduped.get(key)
             if not current or item["upside_score"] > current["upside_score"]:
                 deduped[key] = item
-        return sorted(deduped.values(), key=lambda row: (row["upside_score"], row["relevance_score"]), reverse=True)[:10]
-
+        return sorted(deduped.values(), key=lambda row: (row["upside_score"], row["relevance_score"]), reverse=True)[:15]

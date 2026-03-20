@@ -37,7 +37,7 @@ export function RankingTable({ items, title = "상위 반응 가능 종목" }: {
                   {formatPercent(item.dayChangePct)}
                 </td>
                 <td className="py-4">
-                  <div className="font-medium text-cyan-200">{(item.upsideScore * 100).toFixed(0)}점</div>
+                  <div className="font-medium text-cyan-200">{(item.upsideScore * 100).toFixed(0)}%</div>
                   <div className="mt-1 h-2 w-24 overflow-hidden rounded-full bg-white/8">
                     <div className="h-full rounded-full bg-cyan-400" style={{ width: `${item.upsideScore * 100}%` }} />
                   </div>

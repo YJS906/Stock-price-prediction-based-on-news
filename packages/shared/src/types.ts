@@ -1,6 +1,10 @@
 export type NewsSourceType = "domestic" | "foreign";
 export type ImpactDirection = "positive" | "neutral" | "negative" | "mixed";
 export type MarketRegime = "bullish" | "neutral" | "risk-off";
+export type ContentMode = "live" | "hybrid" | "mock";
+export type LinkStatus = "direct" | "google-news" | "mock" | "missing";
+export type PriceStatus = "live" | "delayed" | "mock";
+export type ConnectionMode = "polling";
 
 export interface MarketSummaryCard {
   label: string;
@@ -33,6 +37,11 @@ export interface NewsCard {
   sentimentScore: number;
   importanceLabel: string;
   url: string;
+  originalUrl?: string | null;
+  sourceHomeUrl?: string | null;
+  linkStatus: LinkStatus;
+  linkHost?: string | null;
+  contentMode: ContentMode;
   linkedStocks: Array<{
     ticker: string;
     nameKo: string;
@@ -98,6 +107,11 @@ export interface ArticleDetailResponse {
   body?: string | null;
   translatedSummaryKo?: string | null;
   url: string;
+  originalUrl?: string | null;
+  sourceHomeUrl?: string | null;
+  linkStatus: LinkStatus;
+  linkHost?: string | null;
+  contentMode: ContentMode;
   themes: ThemeCard[];
   linkedStocks: RankingEntry[];
   cluster?: ArticleClusterCard | null;
@@ -162,12 +176,18 @@ export interface StockListItem {
   currentPrice: number;
   dayChangePct: number;
   themes: string[];
+  isTracked: boolean;
+  priceSource: string;
+  priceStatus: PriceStatus;
+  priceUpdatedAt?: string | null;
+  matchType?: string | null;
 }
 
 export interface StockChartResponse {
   ticker: string;
   timeframe: string;
   source: string;
+  priceStatus: PriceStatus;
   updatedAt?: string | null;
   availableTimeframes: string[];
   points: PricePoint[];
@@ -185,11 +205,14 @@ export interface StockDetailResponse {
   previousClose: number;
   dayChangePct: number;
   themeNames: string[];
+  isTracked: boolean;
   rankingReasons: string[];
   forecast: ForecastWidget;
   explanationCards: ExplanationCard[];
   priceTimeframe: string;
   priceSource: string;
+  priceStatus: PriceStatus;
+  priceDisclaimer: string;
   priceUpdatedAt?: string | null;
   chartTimeframes: string[];
   defaultChartTimeframe: string;
@@ -202,7 +225,11 @@ export interface StockDetailResponse {
 export interface LiveNewsResponse {
   generatedAt: string;
   pollingIntervalMs: number;
+  newestPublishedAt?: string | null;
   themeSlug?: string | null;
+  timezone: string;
+  connectionMode: ConnectionMode;
+  contentMode: ContentMode;
   items: NewsCard[];
 }
 

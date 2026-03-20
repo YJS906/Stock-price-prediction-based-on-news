@@ -59,6 +59,8 @@ class LiveForeignGoogleNewsProvider(NewsProvider):
                     "source_name": getattr(getattr(entry, "source", None), "title", None) or "Google News",
                     "external_id": external_id,
                     "url": link,
+                    "original_url": None,
+                    "source_home_url": getattr(getattr(entry, "source", None), "href", None),
                     "title": title,
                     "summary": summary,
                     "body": None,

@@ -57,6 +57,7 @@ class ArticleNormalizer:
                 "theme_hints": raw.get("themes", []),
                 "related_tickers": raw.get("related_tickers", []),
                 "impact_summary": raw.get("korea_market_impact_summary"),
+                "original_url": raw.get("original_url"),
+                "source_home_url": raw.get("source_home_url"),
             },
         )
-

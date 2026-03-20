@@ -8,8 +8,8 @@ class ArticleRepository:
     def __init__(self, db: Session) -> None:
         self.db = db
 
-    def list_articles(self, limit: int = 30) -> list[Article]:
-        statement = (
+    def list_articles(self, limit: int = 60) -> list[Article]:
+        base_statement = (
             select(Article)
             .where(Article.is_stock_relevant.is_(True))
             .options(
@@ -18,13 +18,17 @@ class ArticleRepository:
                 selectinload(Article.foreign_impact),
                 selectinload(Article.clusters),
             )
-            .order_by(Article.published_at.desc())
-            .limit(limit)
         )
-        return list(self.db.scalars(statement).all())
+        live_statement = base_statement.where(~Article.provider.like("mock-%")).order_by(Article.published_at.desc()).limit(limit)
+        live_articles = list(self.db.scalars(live_statement).all())
+        if live_articles:
+            return live_articles
 
-    def list_articles_by_theme(self, theme_slug: str, limit: int = 30) -> list[Article]:
-        statement = (
+        fallback_statement = base_statement.order_by(Article.published_at.desc()).limit(limit)
+        return list(self.db.scalars(fallback_statement).all())
+
+    def list_articles_by_theme(self, theme_slug: str, limit: int = 60) -> list[Article]:
+        base_statement = (
             select(Article)
             .join(Article.themes)
             .where(Article.is_stock_relevant.is_(True), Theme.slug == theme_slug)
@@ -34,10 +38,14 @@ class ArticleRepository:
                 selectinload(Article.foreign_impact),
                 selectinload(Article.clusters),
             )
-            .order_by(Article.published_at.desc())
-            .limit(limit)
         )
-        return list(self.db.scalars(statement).unique().all())
+        live_statement = base_statement.where(~Article.provider.like("mock-%")).order_by(Article.published_at.desc()).limit(limit)
+        live_articles = list(self.db.scalars(live_statement).unique().all())
+        if live_articles:
+            return live_articles
+
+        fallback_statement = base_statement.order_by(Article.published_at.desc()).limit(limit)
+        return list(self.db.scalars(fallback_statement).unique().all())
 
     def get_article(self, article_id: str) -> Article | None:
         statement = (

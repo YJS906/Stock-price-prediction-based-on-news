@@ -32,6 +32,11 @@ class NewsCardSchema(BaseModel):
     sentimentScore: float
     importanceLabel: str
     url: str
+    originalUrl: str | None = None
+    sourceHomeUrl: str | None = None
+    linkStatus: str
+    linkHost: str | None = None
+    contentMode: str
     linkedStocks: list[dict]
 
 
@@ -94,6 +99,11 @@ class ArticleDetailResponseSchema(BaseModel):
     body: str | None = None
     translatedSummaryKo: str | None = None
     url: str
+    originalUrl: str | None = None
+    sourceHomeUrl: str | None = None
+    linkStatus: str
+    linkHost: str | None = None
+    contentMode: str
     themes: list[ThemeCardSchema]
     linkedStocks: list[RankingEntrySchema]
     cluster: ClusterCardSchema | None = None
@@ -145,12 +155,18 @@ class StockListItemSchema(BaseModel):
     currentPrice: float
     dayChangePct: float
     themes: list[str]
+    isTracked: bool
+    priceSource: str
+    priceStatus: str
+    priceUpdatedAt: str | None = None
+    matchType: str | None = None
 
 
 class StockChartResponseSchema(BaseModel):
     ticker: str
     timeframe: str
     source: str
+    priceStatus: str
     updatedAt: str | None = None
     availableTimeframes: list[str]
     points: list[PricePointSchema]
@@ -168,11 +184,14 @@ class StockDetailResponseSchema(BaseModel):
     previousClose: float
     dayChangePct: float
     themeNames: list[str]
+    isTracked: bool
     rankingReasons: list[str]
     forecast: ForecastWidgetSchema
     explanationCards: list[ExplanationCardSchema]
     priceTimeframe: str
     priceSource: str
+    priceStatus: str
+    priceDisclaimer: str
     priceUpdatedAt: str | None = None
     chartTimeframes: list[str]
     defaultChartTimeframe: str
@@ -185,7 +204,11 @@ class StockDetailResponseSchema(BaseModel):
 class LiveNewsResponseSchema(BaseModel):
     generatedAt: str
     pollingIntervalMs: int
+    newestPublishedAt: str | None = None
     themeSlug: str | None = None
+    timezone: str
+    connectionMode: str
+    contentMode: str
     items: list[NewsCardSchema]
 
 

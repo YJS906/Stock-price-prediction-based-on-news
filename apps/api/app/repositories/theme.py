@@ -34,7 +34,7 @@ class ThemeRepository:
         return self.db.scalar(statement)
 
     def list_articles_for_theme(self, theme_id, limit: int = 12) -> list[Article]:
-        statement = (
+        base_statement = (
             select(Article)
             .join(Article.themes)
             .where(Theme.id == theme_id)
@@ -43,7 +43,11 @@ class ThemeRepository:
                 selectinload(Article.stock_links).selectinload(StockNewsLink.stock),
                 selectinload(Article.clusters),
             )
-            .order_by(Article.published_at.desc())
-            .limit(limit)
         )
-        return list(self.db.scalars(statement).unique().all())
+        live_statement = base_statement.where(~Article.provider.like("mock-%")).order_by(Article.published_at.desc()).limit(limit)
+        live_articles = list(self.db.scalars(live_statement).unique().all())
+        if live_articles:
+            return live_articles
+
+        fallback_statement = base_statement.order_by(Article.published_at.desc()).limit(limit)
+        return list(self.db.scalars(fallback_statement).unique().all())

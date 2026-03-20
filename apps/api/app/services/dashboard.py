@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.repositories.dashboard import DashboardRepository
 from app.schemas.api import DashboardResponseSchema
-from app.services.presenters import cluster_card, news_card, ranking_entry, stock_map_from_themes, theme_card
+from app.services.presenters import cluster_card, news_card, ranking_entry, serialize_datetime, stock_map_from_themes, theme_card
 
 
 class DashboardService:
@@ -26,21 +26,21 @@ class DashboardService:
 
         market_summary = [
             {"label": "활성 테마", "value": f"{len(themes)}개", "change": None, "tone": "positive"},
-            {"label": "해외 뉴스", "value": f"{foreign_articles}건", "change": "미국·글로벌 기사 포함", "tone": "neutral"},
+            {"label": "해외 뉴스", "value": f"{foreign_articles}건", "change": "미국 및 글로벌 기사 포함", "tone": "neutral"},
             {
                 "label": "상위 종목 평균",
                 "value": f"{avg_move:+.1f}%",
-                "change": "상위 5개 등락률",
+                "change": "상위 5개 등락률 평균",
                 "tone": "positive" if avg_move >= 0 else "negative",
             },
             {"label": "주식 관련성", "value": f"{relevance_rate:.1f}%", "change": "필터 통과 기사 비중", "tone": "neutral"},
         ]
 
         return DashboardResponseSchema(
-            generatedAt=articles[0].published_at.isoformat() if articles else "",
+            generatedAt=serialize_datetime(articles[0].published_at) if articles else "",
             marketSummary=market_summary,
             topThemes=[theme_card(theme) for theme in sorted(themes, key=lambda row: len(row.articles), reverse=True)[:6]],
             latestNews=[news_card(article) for article in articles],
-            featuredRanking=featured_ranking[:10],
+            featuredRanking=featured_ranking[:15],
             hotClusters=[cluster_card(cluster) for cluster in clusters],
         )

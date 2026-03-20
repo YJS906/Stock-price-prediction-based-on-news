@@ -9,6 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getArticle } from "@/lib/api";
 
+function linkGuide(status: string) {
+  if (status === "direct") return "원문 사이트로 직접 이동합니다.";
+  if (status === "google-news") return "직접 원문 URL 확보가 어려워 Google News 경유 링크를 제공합니다. 필요하면 출처 홈으로도 이동할 수 있습니다.";
+  if (status === "mock") return "이 기사는 mock 데이터여서 실제 원문 링크가 없습니다.";
+  return "원문 링크가 제공되지 않았습니다.";
+}
+
 export default async function ArticleDetailPage({ params }: { params: { id: string } }) {
   try {
     const article = await getArticle(params.id);
@@ -21,6 +28,7 @@ export default async function ArticleDetailPage({ params }: { params: { id: stri
               <Badge variant={article.sourceType === "foreign" ? "warning" : "default"}>
                 {article.sourceType === "foreign" ? "해외 뉴스" : "국내 뉴스"}
               </Badge>
+              <Badge>{article.linkStatus === "direct" ? "원문 직결" : article.linkStatus === "google-news" ? "Google News 경유" : article.linkStatus === "mock" ? "mock" : "링크 없음"}</Badge>
               {article.themes.map((theme) => (
                 <Badge key={theme.id} variant="info">
                   {theme.name}
@@ -30,17 +38,35 @@ export default async function ArticleDetailPage({ params }: { params: { id: stri
             <div>
               <h1 className="max-w-4xl text-4xl font-semibold text-white">{article.title}</h1>
               <p className="mt-3 text-sm text-muted-foreground">
-                {article.sourceName} · {formatDateTime(article.publishedAt)}
+                {article.sourceName}
+                {article.linkHost ? ` · ${article.linkHost}` : ""}
+                {" · "}
+                {formatDateTime(article.publishedAt)}
               </p>
             </div>
             <p className="max-w-4xl text-sm leading-7 text-slate-200">{article.translatedSummaryKo ?? article.summary}</p>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-6 text-muted-foreground">
+              {linkGuide(article.linkStatus)}
+            </div>
             <div className="flex flex-wrap gap-3">
-              <Link href={article.url} target="_blank">
-                <Button>
-                  원문 보기
-                  <ExternalLink className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
+              {article.url ? (
+                <a href={article.url} target="_blank" rel="noreferrer">
+                  <Button>
+                    원본보기
+                    <ExternalLink className="ml-2 h-4 w-4" />
+                  </Button>
+                </a>
+              ) : (
+                <Button disabled>원문 링크 없음</Button>
+              )}
+              {article.sourceHomeUrl ? (
+                <a href={article.sourceHomeUrl} target="_blank" rel="noreferrer">
+                  <Button variant="ghost">
+                    출처 홈 이동
+                    <ExternalLink className="ml-2 h-4 w-4" />
+                  </Button>
+                </a>
+              ) : null}
               {article.cluster ? <Badge>{article.cluster.headline}</Badge> : null}
             </div>
           </CardContent>
@@ -57,7 +83,7 @@ export default async function ArticleDetailPage({ params }: { params: { id: stri
                 <p className="mt-3 text-sm leading-7 text-slate-200">{article.foreignImpact.translatedSummaryKo}</p>
               </div>
               <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
-                <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">국내 시장 해석</p>
+                <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">국내 영향 해석</p>
                 <p className="mt-3 text-sm leading-7 text-slate-200">{article.foreignImpact.koreaImpactSummary}</p>
               </div>
             </CardContent>
@@ -65,6 +91,12 @@ export default async function ArticleDetailPage({ params }: { params: { id: stri
         ) : null}
 
         <RankingTable items={article.linkedStocks} title="이 뉴스와 연결 강도가 높은 종목" />
+
+        <div className="flex justify-end">
+          <Link href="/live">
+            <Button variant="ghost">실시간 뉴스 피드로 돌아가기</Button>
+          </Link>
+        </div>
       </div>
     );
   } catch {

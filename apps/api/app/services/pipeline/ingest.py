@@ -147,7 +147,7 @@ class IngestionPipelineService:
                 if relevance.is_stock_relevant:
                     relevant += 1
                     candidates = self.entity_linker.link(normalized, stocks, list(theme_scores.keys()))
-                    for candidate in candidates[:10]:
+                    for candidate in candidates[:15]:
                         theme_boost = 0.05 if any(link.theme.slug in theme_scores for link in candidate.stock.themes) else 0.0
                         upside_score, direction = self.ranking_engine.score_link(
                             relevance.sentiment_score,

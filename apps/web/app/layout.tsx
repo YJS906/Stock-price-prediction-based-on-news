@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { IBM_Plex_Sans_KR, Space_Grotesk } from "next/font/google";
 
 import { TopNav } from "@/components/layout/top-nav";
+import { BRAND_DESCRIPTION, BRAND_NAME } from "@/lib/brand";
 import "./globals.css";
 
 const bodyFont = IBM_Plex_Sans_KR({
@@ -17,8 +18,24 @@ const displayFont = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "NewsAlpha | 한국 주식 뉴스 인텔리전스",
-  description: "실시간 뉴스, 테마, 종목 연결, 차트, 예측 밴드를 한 화면에서 보는 한국 주식 보조 플랫폼"
+  title: {
+    default: BRAND_NAME,
+    template: `%s | ${BRAND_NAME}`
+  },
+  description: BRAND_DESCRIPTION,
+  applicationName: BRAND_NAME,
+  openGraph: {
+    title: BRAND_NAME,
+    description: BRAND_DESCRIPTION,
+    siteName: BRAND_NAME,
+    locale: "ko_KR",
+    type: "website"
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: BRAND_NAME,
+    description: BRAND_DESCRIPTION
+  }
 };
 
 export const dynamic = "force-dynamic";

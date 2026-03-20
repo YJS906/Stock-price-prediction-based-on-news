@@ -1,6 +1,6 @@
 import json
 from copy import deepcopy
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 
 from app.core.config import get_settings
 from app.core.enums import SourceType
@@ -20,12 +20,6 @@ def released_mock_articles(source_type: SourceType) -> list[dict]:
     candidates = [deepcopy(item) for item in payload["articles"] if item["source_type"] == source_type.value]
     visible_count = min(_visible_count(len(candidates)), len(candidates))
     visible_items = candidates[:visible_count]
-    now = datetime.now(UTC)
-
-    for index, item in enumerate(visible_items):
-        released_at = now - timedelta(minutes=visible_count - index - 1)
-        item["published_at"] = released_at.astimezone().isoformat()
-
     return visible_items
 
 

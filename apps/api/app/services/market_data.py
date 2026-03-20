@@ -1,5 +1,6 @@
+from collections import defaultdict
 from collections.abc import Iterable
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
 
@@ -12,9 +13,44 @@ class NaverMarketDataService:
 
     def fetch(self, ticker: str) -> dict | None:
         minute_payload = self._minute_payload(ticker)
+        daily_payload = self._daily_payload(ticker)
+
+        if not minute_payload and not daily_payload:
+            return None
+
+        series: dict[str, list[dict]] = {}
+        candles: list[dict] = []
+
         if minute_payload:
-            return minute_payload
-        return self._daily_payload(ticker)
+            series["1m"] = minute_payload["candles"]
+            candles.extend(minute_payload["candles"])
+
+        if daily_payload:
+            daily_rows = daily_payload["candles"]
+            series["1d"] = daily_rows[-240:]
+            weekly_rows = self._aggregate_rows(daily_rows, timeframe="1w", source="naver-week")
+            monthly_rows = self._aggregate_rows(daily_rows, timeframe="1mo", source="naver-month")
+            series["1w"] = weekly_rows[-104:]
+            series["1mo"] = monthly_rows[-60:]
+            candles.extend(series["1d"])
+            candles.extend(series["1w"])
+            candles.extend(series["1mo"])
+
+        primary = minute_payload or daily_payload
+        assert primary is not None
+
+        return {
+            "timeframe": primary["timeframe"],
+            "source": primary["source"],
+            "updated_at": primary["updated_at"],
+            "current_price": primary["current_price"],
+            "previous_close": primary["previous_close"],
+            "best_bid": primary["best_bid"],
+            "best_ask": primary["best_ask"],
+            "candles": candles,
+            "series": series,
+            "price_status": "live",
+        }
 
     def _minute_payload(self, ticker: str) -> dict | None:
         try:
@@ -67,13 +103,14 @@ class NaverMarketDataService:
             import FinanceDataReader as fdr
 
             end = datetime.now().date().isoformat()
-            frame = fdr.DataReader(ticker, "2026-01-01", end)
+            start = (datetime.now().date() - timedelta(days=365 * 5)).isoformat()
+            frame = fdr.DataReader(ticker, start, end)
         except Exception:
             return None
         if frame is None or frame.empty:
             return None
 
-        frame = frame.sort_index().tail(90)
+        frame = frame.sort_index()
         latest = frame.iloc[-1]
         previous_close = float(frame.iloc[-2]["Close"]) if len(frame) > 1 else float(latest["Close"])
         candles = [
@@ -104,6 +141,41 @@ class NaverMarketDataService:
             "best_ask": None,
             "candles": candles,
         }
+
+    def _aggregate_rows(self, rows: list[dict], timeframe: str, source: str) -> list[dict]:
+        buckets: dict[datetime, list[dict]] = defaultdict(list)
+        for row in rows:
+            bucket_at = row["bucket_at"]
+            if bucket_at.tzinfo is None:
+                bucket_at = bucket_at.replace(tzinfo=UTC)
+            local = bucket_at.astimezone(self.korea_tz)
+            if timeframe == "1w":
+                local_bucket = datetime(local.year, local.month, local.day, tzinfo=self.korea_tz) - timedelta(days=local.weekday())
+            else:
+                local_bucket = datetime(local.year, local.month, 1, tzinfo=self.korea_tz)
+            buckets[local_bucket.astimezone(UTC)].append(row)
+
+        aggregated: list[dict] = []
+        for bucket, bucket_rows in sorted(buckets.items(), key=lambda item: item[0]):
+            first = bucket_rows[0]
+            last = bucket_rows[-1]
+            aggregated.append(
+                {
+                    "bucket_at": bucket,
+                    "timeframe": timeframe,
+                    "open": round(float(first["open"]), 2),
+                    "high": round(max(float(row["high"]) for row in bucket_rows), 2),
+                    "low": round(min(float(row["low"]) for row in bucket_rows), 2),
+                    "close": round(float(last["close"]), 2),
+                    "volume": int(sum(int(row["volume"]) for row in bucket_rows)),
+                    "source": source,
+                    "extra": {
+                        "session": "live",
+                        "previous_close": float(bucket_rows[-2]["close"]) if len(bucket_rows) > 1 else float(first["open"]),
+                    },
+                }
+            )
+        return aggregated
 
     def _parse_signed_number(self, value) -> float | None:
         if value is None:

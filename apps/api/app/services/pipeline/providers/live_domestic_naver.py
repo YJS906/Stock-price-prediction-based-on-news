@@ -55,6 +55,7 @@ class LiveDomesticNaverNewsProvider(NewsProvider):
                     summary = self._summary_text(summary_node)
                     published_at_iso = published_at.astimezone(UTC).isoformat()
                     external_id = self._external_id(raw_url)
+                    original_url = self._original_article_url(raw_url)
 
                     seen_urls.add(article_url)
                     articles.append(
@@ -64,6 +65,8 @@ class LiveDomesticNaverNewsProvider(NewsProvider):
                             "source_name": source_name,
                             "external_id": external_id,
                             "url": article_url,
+                            "original_url": original_url,
+                            "source_home_url": self.site_root,
                             "title": title,
                             "summary": summary or title,
                             "body": None,
@@ -107,3 +110,10 @@ class LiveDomesticNaverNewsProvider(NewsProvider):
         article_id = raw_url.split("article_id=")[-1].split("&", 1)[0] if "article_id=" in raw_url else raw_url
         office_id = raw_url.split("office_id=")[-1].split("&", 1)[0] if "office_id=" in raw_url else "naver"
         return f"{office_id}:{article_id}"[:120]
+
+    def _original_article_url(self, raw_url: str) -> str:
+        article_id = raw_url.split("article_id=")[-1].split("&", 1)[0] if "article_id=" in raw_url else ""
+        office_id = raw_url.split("office_id=")[-1].split("&", 1)[0] if "office_id=" in raw_url else ""
+        if article_id and office_id:
+            return f"https://n.news.naver.com/mnews/article/{office_id}/{article_id}"
+        return urljoin(self.site_root, raw_url)

@@ -19,7 +19,7 @@ class DashboardRepository:
         return list(self.db.scalars(statement).all())
 
     def list_latest_articles(self, limit: int = 10) -> list[Article]:
-        statement = (
+        base_statement = (
             select(Article)
             .where(Article.is_stock_relevant.is_(True))
             .options(
@@ -27,10 +27,14 @@ class DashboardRepository:
                 selectinload(Article.stock_links).selectinload(StockNewsLink.stock),
                 selectinload(Article.foreign_impact),
             )
-            .order_by(Article.published_at.desc())
-            .limit(limit)
         )
-        return list(self.db.scalars(statement).all())
+        live_statement = base_statement.where(~Article.provider.like("mock-%")).order_by(Article.published_at.desc()).limit(limit)
+        live_articles = list(self.db.scalars(live_statement).all())
+        if live_articles:
+            return live_articles
+
+        fallback_statement = base_statement.order_by(Article.published_at.desc()).limit(limit)
+        return list(self.db.scalars(fallback_statement).all())
 
     def list_hot_clusters(self, limit: int = 5) -> list[ArticleCluster]:
         statement = (

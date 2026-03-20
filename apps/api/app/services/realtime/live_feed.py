@@ -3,6 +3,7 @@ from threading import Lock
 
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.schemas.api import LiveNewsResponseSchema
 from app.services.articles import ArticleService
 from app.services.pipeline.seed import SeedService
@@ -19,14 +20,20 @@ class LiveFeedService:
         self.db = db
         self.article_service = ArticleService(db)
         self.seed_service = SeedService()
+        self.settings = get_settings()
 
     def get_live_feed(self, theme_slug: str | None = None, limit: int = 20) -> LiveNewsResponseSchema:
         self._refresh_if_due()
         items = self.article_service.list_articles(theme_slug=theme_slug)[:limit]
+        content_mode = self._content_mode(items)
         return LiveNewsResponseSchema(
             generatedAt=datetime.now(UTC).isoformat(),
             pollingIntervalMs=self.polling_interval_ms,
+            newestPublishedAt=items[0]["publishedAt"] if items else None,
             themeSlug=theme_slug,
+            timezone=self.settings.timezone,
+            connectionMode="polling",
+            contentMode=content_mode,
             items=items,
         )
 
@@ -48,3 +55,17 @@ class LiveFeedService:
             except Exception:
                 # Keep the live feed readable even if a provider fetch fails.
                 return
+
+    def _content_mode(self, items: list[dict]) -> str:
+        configured = self.settings.news_provider_mode.lower()
+        if configured == "mock":
+            return "mock"
+        if configured == "live":
+            return "live"
+        if not items:
+            return "hybrid"
+        if all(item.get("contentMode") == "live" for item in items):
+            return "live"
+        if all(item.get("contentMode") == "mock" for item in items):
+            return "mock"
+        return "hybrid"

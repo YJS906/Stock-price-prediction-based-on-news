@@ -1,12 +1,14 @@
 import Link from "next/link";
 
+import { BRAND_MONOGRAM, BRAND_NAME } from "@/lib/brand";
 import { Badge } from "@/components/ui/badge";
 
 const links = [
   { href: "/", label: "대시보드" },
+  { href: "/live", label: "실시간 뉴스" },
   { href: "/themes", label: "테마" },
-  { href: "/articles", label: "뉴스" },
-  { href: "/stocks", label: "종목" },
+  { href: "/articles", label: "뉴스 아카이브" },
+  { href: "/stocks", label: "종목 검색" },
   { href: "/admin/ops", label: "Ops" },
   { href: "/admin/evals", label: "모델 평가" }
 ];
@@ -17,11 +19,11 @@ export function TopNav() {
       <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between gap-4 px-5 py-4 lg:px-8">
         <Link href="/" className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-cyan-400/30 bg-cyan-400/10 text-sm font-semibold text-cyan-200">
-            NA
+            {BRAND_MONOGRAM}
           </div>
           <div>
-            <div className="font-semibold tracking-[0.2em] text-white/90">NEWSALPHA</div>
-            <div className="text-xs text-muted-foreground">한국 주식 뉴스 기반 투자 보조</div>
+            <div className="font-semibold tracking-[0.08em] text-white/90">{BRAND_NAME}</div>
+            <div className="text-xs text-muted-foreground">한국 주식 실시간 뉴스 기반 투자 보조</div>
           </div>
         </Link>
 
@@ -37,7 +39,7 @@ export function TopNav() {
           ))}
         </nav>
 
-        <Badge variant="info">실시간 피드 중심</Badge>
+        <Badge variant="info">실시간 피드 운영 중</Badge>
       </div>
     </header>
   );

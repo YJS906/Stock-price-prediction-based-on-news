@@ -1,5 +1,8 @@
+import Link from "next/link";
+
 import { NewsStream } from "@/components/dashboard/news-stream";
 import { SectionHeading } from "@/components/dashboard/section-heading";
+import { Button } from "@/components/ui/button";
 import { getArticles, getThemes } from "@/lib/api";
 
 export default async function ArticlesPage() {
@@ -8,15 +11,20 @@ export default async function ArticlesPage() {
   return (
     <section className="space-y-6">
       <SectionHeading
-        eyebrow="Filtered Feed"
-        title="실시간 주식 뉴스 피드"
-        description="연예·사건·라이프스타일 등 투자와 직접 관련 없는 뉴스는 제외하고, 최신 기사만 자동으로 반영합니다."
+        eyebrow="Archive"
+        title="뉴스 아카이브"
+        description="실시간 피드에 노출된 기사를 테마 필터와 함께 다시 확인하는 화면입니다. 실시간 전용 화면은 별도 페이지에서 더 조밀하게 볼 수 있습니다."
+        action={
+          <Link href="/live">
+            <Button variant="ghost">실시간 뉴스로 이동</Button>
+          </Link>
+        }
       />
       <NewsStream
         items={articles}
         themeOptions={themes.map((theme) => ({ slug: theme.slug, name: theme.name }))}
-        title="실시간 뉴스 목록"
-        description="새 뉴스는 페이지 새로고침 없이 최상단에 추가됩니다."
+        title="뉴스 목록"
+        description="최신 기사 순으로 정렬되며, 자동 갱신도 계속 유지됩니다."
         limit={20}
       />
     </section>

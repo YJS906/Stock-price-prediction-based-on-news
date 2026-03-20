@@ -1,9 +1,20 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Iterable
+from urllib.parse import parse_qs, urlparse
+from zoneinfo import ZoneInfo
 
 from app.models import Article, ArticleCluster, ExplanationCard, Forecast, MarketPrice, Stock, Theme
 
 TIMEFRAME_ORDER = ("1m", "1d", "1w", "1mo")
+KOREA_TIME_ZONE = ZoneInfo("Asia/Seoul")
+
+
+def serialize_datetime(value: datetime | None) -> str | None:
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=UTC)
+    return value.astimezone(KOREA_TIME_ZONE).isoformat()
 
 
 def _group_prices_by_timeframe(stock: Stock) -> dict[str, list[MarketPrice]]:
@@ -70,17 +81,35 @@ def _current_price(stock: Stock) -> float:
     return round(latest.close, 2) if latest else 0.0
 
 
+def price_status_from_source(source: str | None, session: str | None = None) -> str:
+    if session == "mock" or (source or "").startswith("mock"):
+        return "mock"
+    if session == "live" or (source or "").startswith("naver"):
+        return "live"
+    return "delayed"
+
+
 def quote_meta(stock: Stock) -> dict:
     timeframe = _quote_timeframe(stock)
     latest, _ = _latest_candles(stock)
     extra = latest.extra if latest and latest.extra else {}
+    source = latest.source if latest else "mock-market"
     return {
         "priceTimeframe": timeframe or "1d",
-        "priceSource": latest.source if latest else "mock-market",
-        "priceUpdatedAt": extra.get("updated_at") or (latest.bucket_at.isoformat() if latest else None),
+        "priceSource": source,
+        "priceStatus": price_status_from_source(source, extra.get("session")),
+        "priceUpdatedAt": extra.get("updated_at") or serialize_datetime(latest.bucket_at if latest else None),
         "bestBid": extra.get("best_bid"),
         "bestAsk": extra.get("best_ask"),
     }
+
+
+def price_disclaimer(price_status: str) -> str:
+    if price_status == "live":
+        return "실시간 또는 장중 근접 시세 기준입니다. 체결 지연과 호가 변화로 실제 표시값과 차이가 날 수 있습니다."
+    if price_status == "mock":
+        return "현재 가격과 차트는 mock 데이터입니다. 실제 투자 판단용 시세로 사용하면 안 됩니다."
+    return "종가 또는 지연 시세 기준입니다. 장중 체결가와는 차이가 있을 수 있습니다."
 
 
 def confidence_label(score: float) -> str:
@@ -93,10 +122,10 @@ def confidence_label(score: float) -> str:
 
 def importance_label(score: float) -> str:
     if score >= 0.85:
-        return "핵심"
+        return "긴급"
     if score >= 0.68:
         return "중요"
-    return "관심"
+    return "관찰"
 
 
 def theme_card(theme: Theme) -> dict:
@@ -115,25 +144,99 @@ def theme_card(theme: Theme) -> dict:
     }
 
 
+def _provider_content_mode(provider: str) -> str:
+    return "mock" if provider.startswith("mock-") else "live"
+
+
+def _naver_original_url(url: str) -> str | None:
+    parsed = urlparse(url)
+    if "finance.naver.com" not in parsed.netloc:
+        return None
+    query = parse_qs(parsed.query)
+    office_id = query.get("office_id", [None])[0]
+    article_id = query.get("article_id", [None])[0]
+    if office_id and article_id:
+        return f"https://n.news.naver.com/mnews/article/{office_id}/{article_id}"
+    return None
+
+
+def _link_meta(article: Article) -> dict[str, str | None]:
+    extra = article.extra or {}
+    source_home_url = extra.get("source_home_url")
+    original_url = extra.get("original_url") or _naver_original_url(article.url)
+    parsed = urlparse(article.url) if article.url else None
+    host = parsed.netloc.lower() if parsed else ""
+
+    if not article.url:
+        return {
+            "url": source_home_url or "",
+            "originalUrl": original_url,
+            "sourceHomeUrl": source_home_url,
+            "linkStatus": "missing",
+            "linkHost": urlparse(source_home_url).netloc.lower() if source_home_url else None,
+        }
+
+    if "example.com" in host:
+        return {
+            "url": source_home_url or "",
+            "originalUrl": None,
+            "sourceHomeUrl": source_home_url,
+            "linkStatus": "mock",
+            "linkHost": None,
+        }
+
+    if original_url:
+        return {
+            "url": original_url,
+            "originalUrl": original_url,
+            "sourceHomeUrl": source_home_url,
+            "linkStatus": "direct",
+            "linkHost": urlparse(original_url).netloc.lower() or host,
+        }
+
+    if "news.google.com" in host:
+        return {
+            "url": article.url,
+            "originalUrl": None,
+            "sourceHomeUrl": source_home_url,
+            "linkStatus": "google-news",
+            "linkHost": source_home_url and urlparse(source_home_url).netloc.lower() or host,
+        }
+
+    return {
+        "url": article.url,
+        "originalUrl": article.url,
+        "sourceHomeUrl": source_home_url,
+        "linkStatus": "direct",
+        "linkHost": host or None,
+    }
+
+
 def news_card(article: Article) -> dict:
     ordered_links = sorted(
         article.stock_links,
         key=lambda item: (item.relevance_score, item.upside_score),
         reverse=True,
     )
+    link_meta = _link_meta(article)
     return {
         "id": str(article.id),
         "title": article.title,
         "sourceName": article.source_name,
         "sourceType": article.source_type.value,
-        "publishedAt": article.published_at.isoformat(),
+        "publishedAt": serialize_datetime(article.published_at),
         "summary": article.summary,
         "translatedSummaryKo": article.translated_summary_ko,
         "themes": [theme.name_ko for theme in article.themes],
         "relevanceScore": round(article.relevance_score, 4),
         "sentimentScore": round(article.sentiment_score, 4),
         "importanceLabel": importance_label(article.relevance_score),
-        "url": article.url,
+        "url": link_meta["url"] or "",
+        "originalUrl": link_meta["originalUrl"],
+        "sourceHomeUrl": link_meta["sourceHomeUrl"],
+        "linkStatus": link_meta["linkStatus"],
+        "linkHost": link_meta["linkHost"],
+        "contentMode": _provider_content_mode(article.provider),
         "linkedStocks": [{"ticker": link.stock.ticker, "nameKo": link.stock.name_ko} for link in ordered_links[:3]],
     }
 
@@ -146,7 +249,7 @@ def cluster_card(cluster: ArticleCluster) -> dict:
         "headline": cluster.headline,
         "summary": cluster.summary,
         "articleCount": cluster.article_count,
-        "latestPublishedAt": cluster.latest_published_at.isoformat(),
+        "latestPublishedAt": serialize_datetime(cluster.latest_published_at),
         "themes": theme_names,
     }
 
@@ -163,15 +266,15 @@ def ranking_entry(item: dict, stock_map: dict[str, Stock]) -> dict:
         "relevanceScore": round(item.get("relevance_score", 0.0), 4),
         "upsideScore": round(item.get("upside_score", 0.0), 4),
         "confidence": round(item.get("confidence", 0.0), 4),
-        "thesis": item.get("reasons", ["뉴스·테마 연결 강도가 높은 후보입니다."])[0],
+        "thesis": item.get("reasons", ["뉴스 연결 강도가 높은 후보 종목입니다."])[0],
         "reasons": item.get("reasons", []),
     }
 
 
 def forecast_widget(forecast: Forecast | None) -> dict:
-    disclaimer = "예측은 확률적 추정치이며, 확정적 투자 조언이나 수익 보장을 의미하지 않습니다."
+    disclaimer = "예측값은 확률 기반 추정치이며, 확정적 투자 조언이나 수익 보장을 의미하지 않습니다."
     if forecast is None:
-        now = datetime.utcnow().isoformat()
+        now = serialize_datetime(datetime.now(UTC))
         return {
             "generatedAt": now,
             "horizon": "close",
@@ -185,7 +288,7 @@ def forecast_widget(forecast: Forecast | None) -> dict:
         }
 
     return {
-        "generatedAt": forecast.generated_at.isoformat(),
+        "generatedAt": serialize_datetime(forecast.generated_at),
         "horizon": forecast.forecast_horizon.value,
         "upProb": round(forecast.direction_up_prob, 4),
         "flatProb": round(forecast.direction_flat_prob, 4),
@@ -217,7 +320,7 @@ def price_series(stock: Stock, timeframe: str | None = None) -> list[dict]:
     rows = grouped.get(selected_timeframe, [])
     return [
         {
-            "time": candle.bucket_at.isoformat(),
+            "time": serialize_datetime(candle.bucket_at),
             "open": round(candle.open, 2),
             "high": round(candle.high, 2),
             "low": round(candle.low, 2),

@@ -15,7 +15,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    app_name: str = "NewsAlpha API"
+    app_name: str = "와이즈경제연구소 API"
     environment: str = "development"
     api_prefix: str = "/api/v1"
     timezone: str = "Asia/Seoul"

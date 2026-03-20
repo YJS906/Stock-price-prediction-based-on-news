@@ -9,15 +9,12 @@ const ReactECharts = dynamic(() => import("echarts-for-react"), { ssr: false });
 function formatAxisLabel(time: string, timeframe: string) {
   const value = new Date(time);
   if (timeframe === "1m") {
-    return value.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
+    return value.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Seoul" });
   }
-  if (timeframe === "1d") {
-    return value.toLocaleDateString("ko-KR", { month: "2-digit", day: "2-digit" });
+  if (timeframe === "1d" || timeframe === "1w") {
+    return value.toLocaleDateString("ko-KR", { month: "2-digit", day: "2-digit", timeZone: "Asia/Seoul" });
   }
-  if (timeframe === "1w") {
-    return value.toLocaleDateString("ko-KR", { month: "2-digit", day: "2-digit" });
-  }
-  return value.toLocaleDateString("ko-KR", { year: "2-digit", month: "2-digit" });
+  return value.toLocaleDateString("ko-KR", { year: "2-digit", month: "2-digit", timeZone: "Asia/Seoul" });
 }
 
 export function PriceChart({ data, timeframe = "1d" }: { data: PricePoint[]; timeframe?: string }) {
