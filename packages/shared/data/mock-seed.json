@@ -1,0 +1,306 @@
+{
+  "themes": [
+    {
+      "slug": "ai-infrastructure",
+      "name_ko": "AI 인프라",
+      "name_en": "AI Infrastructure",
+      "description_ko": "HBM, 패키징, 데이터센터 전력 증설로 이어지는 국내 수혜 종목군",
+      "market_regime": "bullish"
+    },
+    {
+      "slug": "defense-space",
+      "name_ko": "방산·우주",
+      "name_en": "Defense & Space",
+      "description_ko": "유럽 재무장과 수출 확대, 우주 발사체 공급망 관련 수혜",
+      "market_regime": "bullish"
+    },
+    {
+      "slug": "power-grid-nuclear",
+      "name_ko": "전력망·원전",
+      "name_en": "Power Grid & Nuclear",
+      "description_ko": "HVDC, 변압기, 원전 설비, AI 전력 인프라 투자 수혜",
+      "market_regime": "bullish"
+    },
+    {
+      "slug": "secondary-battery",
+      "name_ko": "2차전지",
+      "name_en": "Secondary Battery",
+      "description_ko": "미국 ESS 수요와 배터리 공급망 변화에 반응하는 종목군",
+      "market_regime": "neutral"
+    },
+    {
+      "slug": "biopharma-cdmo",
+      "name_ko": "바이오·CDMO",
+      "name_en": "Biopharma & CDMO",
+      "description_ko": "글로벌 바이오 자금 회복과 위탁생산 수요 확대",
+      "market_regime": "neutral"
+    },
+    {
+      "slug": "robotics-smartfactory",
+      "name_ko": "로봇·스마트팩토리",
+      "name_en": "Robotics & Smart Factory",
+      "description_ko": "협동로봇과 자동화 장비 확대로 연결되는 수혜 종목",
+      "market_regime": "bullish"
+    }
+  ],
+  "stocks": [
+    {
+      "ticker": "000660",
+      "name_ko": "SK하이닉스",
+      "name_en": "SK hynix",
+      "market": "KOSPI",
+      "sector": "반도체",
+      "industry": "메모리",
+      "description": "HBM과 서버 메모리 중심의 핵심 AI 반도체 업체",
+      "aliases": ["하이닉스", "HBM"]
+    },
+    {
+      "ticker": "042700",
+      "name_ko": "한미반도체",
+      "name_en": "Hanmi Semiconductor",
+      "market": "KOSDAQ",
+      "sector": "반도체 장비",
+      "industry": "패키징",
+      "description": "HBM 패키징 장비와 TC 본더 수요가 핵심 동력",
+      "aliases": ["TC 본더", "패키징"]
+    },
+    {
+      "ticker": "007660",
+      "name_ko": "이수페타시스",
+      "name_en": "ISU Petasys",
+      "market": "KOSPI",
+      "sector": "기판",
+      "industry": "고다층 PCB",
+      "description": "AI 서버와 네트워크 장비용 고다층 PCB 공급",
+      "aliases": ["MLB", "AI 서버 기판"]
+    },
+    {
+      "ticker": "012450",
+      "name_ko": "한화에어로스페이스",
+      "name_en": "Hanwha Aerospace",
+      "market": "KOSPI",
+      "sector": "방산",
+      "industry": "항공엔진·무기체계",
+      "description": "유럽·중동 방산 수출과 지상무기 공급 확대 수혜",
+      "aliases": ["방산", "K9", "탄약"]
+    },
+    {
+      "ticker": "079550",
+      "name_ko": "LIG넥스원",
+      "name_en": "LIG Nex1",
+      "market": "KOSPI",
+      "sector": "방산",
+      "industry": "유도무기",
+      "description": "정밀유도무기와 레이더 체계에서 강점",
+      "aliases": ["유도무기", "레이더"]
+    },
+    {
+      "ticker": "010120",
+      "name_ko": "LS ELECTRIC",
+      "name_en": "LS Electric",
+      "market": "KOSPI",
+      "sector": "전력기기",
+      "industry": "전력 자동화",
+      "description": "데이터센터 전력, 북미 변압기, 자동화 수요 수혜",
+      "aliases": ["전력기기", "변압기", "배전"]
+    },
+    {
+      "ticker": "267260",
+      "name_ko": "HD현대일렉트릭",
+      "name_en": "HD Hyundai Electric",
+      "market": "KOSPI",
+      "sector": "전력기기",
+      "industry": "변압기",
+      "description": "고압 변압기와 북미 전력망 교체 수요의 직접 수혜주",
+      "aliases": ["전력망", "고압 변압기"]
+    },
+    {
+      "ticker": "034020",
+      "name_ko": "두산에너빌리티",
+      "name_en": "Doosan Enerbility",
+      "market": "KOSPI",
+      "sector": "에너지",
+      "industry": "원전·발전설비",
+      "description": "원전 기자재와 터빈 공급, 장기 전력 인프라 투자 수혜",
+      "aliases": ["원전", "터빈"]
+    },
+    {
+      "ticker": "247540",
+      "name_ko": "에코프로비엠",
+      "name_en": "Ecopro BM",
+      "market": "KOSDAQ",
+      "sector": "2차전지",
+      "industry": "양극재",
+      "description": "하이니켈 양극재와 ESS 공급망 재편 수혜 가능성",
+      "aliases": ["양극재", "ESS"]
+    },
+    {
+      "ticker": "006400",
+      "name_ko": "삼성SDI",
+      "name_en": "Samsung SDI",
+      "market": "KOSPI",
+      "sector": "2차전지",
+      "industry": "배터리 셀",
+      "description": "원통형·각형 배터리와 ESS 확대 구간의 핵심 플레이어",
+      "aliases": ["배터리", "셀"]
+    },
+    {
+      "ticker": "207940",
+      "name_ko": "삼성바이오로직스",
+      "name_en": "Samsung Biologics",
+      "market": "KOSPI",
+      "sector": "바이오",
+      "industry": "CDMO",
+      "description": "글로벌 CDMO 수주와 대형 제약사 생산 이전 수혜",
+      "aliases": ["CDMO", "위탁생산"]
+    },
+    {
+      "ticker": "277810",
+      "name_ko": "레인보우로보틱스",
+      "name_en": "Rainbow Robotics",
+      "market": "KOSDAQ",
+      "sector": "로봇",
+      "industry": "협동로봇",
+      "description": "협동로봇과 서비스 로봇 수요 확대 수혜",
+      "aliases": ["협동로봇", "스마트팩토리"]
+    }
+  ],
+  "articles": [
+    {
+      "external_id": "reuters-hbm-20260319",
+      "provider": "mock-reuters",
+      "source_type": "foreign",
+      "source_name": "Reuters",
+      "language": "en",
+      "title": "U.S. hyperscalers expand HBM supply commitments as AI server demand accelerates",
+      "summary": "Major cloud operators are securing more HBM capacity and advanced packaging slots through 2026 as AI server deployments keep rising.",
+      "translated_summary_ko": "미국 대형 클라우드 사업자들이 AI 서버 증설에 맞춰 2026년까지 HBM 공급과 첨단 패키징 슬롯을 추가 확보하고 있다.",
+      "published_at": "2026-03-19T08:40:00+09:00",
+      "url": "https://example.com/reuters-hbm-20260319",
+      "themes": ["ai-infrastructure", "power-grid-nuclear"],
+      "cluster_key": "ai-hbm-capacity",
+      "cluster_headline": "AI 서버 증설과 HBM 수요 확장",
+      "related_tickers": ["000660", "042700", "007660"],
+      "korea_market_impact_summary": "HBM과 패키징 수요가 국내 메모리와 후공정 장비주로 확산될 가능성이 높다."
+    },
+    {
+      "external_id": "yonhap-hvdc-20260319",
+      "provider": "mock-yonhap",
+      "source_type": "domestic",
+      "source_name": "연합뉴스",
+      "language": "ko",
+      "title": "산업부, 동해안 HVDC·데이터센터 전력망 투자 조기 집행 검토",
+      "summary": "대형 데이터센터와 첨단산업 단지를 겨냥한 송배전망 투자 일정이 앞당겨질 수 있다는 관측이 나왔다.",
+      "translated_summary_ko": null,
+      "published_at": "2026-03-19T09:05:00+09:00",
+      "url": "https://example.com/yonhap-hvdc-20260319",
+      "themes": ["power-grid-nuclear", "ai-infrastructure"],
+      "cluster_key": "grid-capex-fast-track",
+      "cluster_headline": "전력망 조기 투자와 AI 전력 수요",
+      "related_tickers": ["010120", "267260", "034020"],
+      "korea_market_impact_summary": null
+    },
+    {
+      "external_id": "ap-nato-20260319",
+      "provider": "mock-ap",
+      "source_type": "foreign",
+      "source_name": "AP",
+      "language": "en",
+      "title": "NATO allies outline multi-year restocking plans for guided munitions and artillery",
+      "summary": "European defense ministries are discussing long-term procurement frameworks for guided missiles, artillery and command systems.",
+      "translated_summary_ko": "유럽 방위 당국이 유도무기, 포탄, 지휘체계에 대한 장기 조달 계획을 구체화하고 있다.",
+      "published_at": "2026-03-19T07:20:00+09:00",
+      "url": "https://example.com/ap-nato-20260319",
+      "themes": ["defense-space"],
+      "cluster_key": "europe-defense-restock",
+      "cluster_headline": "유럽 재무장과 장기 조달 확대",
+      "related_tickers": ["012450", "079550"],
+      "korea_market_impact_summary": "정밀유도무기와 지상무기 체계 경쟁력을 가진 국내 방산주에 중기 수주 기대가 재부각될 수 있다."
+    },
+    {
+      "external_id": "mk-hanwha-20260319",
+      "provider": "mock-mk",
+      "source_type": "domestic",
+      "source_name": "매일경제",
+      "language": "ko",
+      "title": "한화에어로, 유럽 공급망 대응 위해 지상무기 생산능력 증설 검토",
+      "summary": "유럽향 방산 납기 대응을 위해 국내 생산라인과 협력사 발주 확대 가능성이 거론됐다.",
+      "translated_summary_ko": null,
+      "published_at": "2026-03-19T10:15:00+09:00",
+      "url": "https://example.com/mk-hanwha-20260319",
+      "themes": ["defense-space"],
+      "cluster_key": "europe-defense-restock",
+      "cluster_headline": "유럽 재무장과 장기 조달 확대",
+      "related_tickers": ["012450", "079550"],
+      "korea_market_impact_summary": null
+    },
+    {
+      "external_id": "bloomberg-ess-20260318",
+      "provider": "mock-bloomberg",
+      "source_type": "foreign",
+      "source_name": "Bloomberg",
+      "language": "en",
+      "title": "U.S. utilities accelerate ESS deployments as summer reserve margins tighten",
+      "summary": "Grid operators and utilities are pulling forward storage projects, boosting battery cell and cathode demand expectations.",
+      "translated_summary_ko": "미국 전력회사가 여름철 예비율 확보를 위해 ESS 프로젝트를 앞당기면서 배터리 셀과 양극재 수요 기대가 높아지고 있다.",
+      "published_at": "2026-03-18T22:30:00+09:00",
+      "url": "https://example.com/bloomberg-ess-20260318",
+      "themes": ["secondary-battery", "power-grid-nuclear"],
+      "cluster_key": "us-ess-demand",
+      "cluster_headline": "미국 ESS 수요 조기 집행",
+      "related_tickers": ["247540", "006400", "010120"],
+      "korea_market_impact_summary": "ESS 수요 회복은 배터리 소재주와 셀 업체뿐 아니라 전력기기 업체의 수주 가시성도 높일 수 있다."
+    },
+    {
+      "external_id": "edaily-ls-20260319",
+      "provider": "mock-edaily",
+      "source_type": "domestic",
+      "source_name": "이데일리",
+      "language": "ko",
+      "title": "LS ELECTRIC, 북미 데이터센터향 전력기기 수주 파이프라인 확대",
+      "summary": "북미 데이터센터와 산업용 전력 설비 발주가 동시 확대되며 상반기 수주 가시성이 높아졌다는 분석이 나왔다.",
+      "translated_summary_ko": null,
+      "published_at": "2026-03-19T11:05:00+09:00",
+      "url": "https://example.com/edaily-ls-20260319",
+      "themes": ["power-grid-nuclear", "ai-infrastructure"],
+      "cluster_key": "grid-capex-fast-track",
+      "cluster_headline": "전력망 조기 투자와 AI 전력 수요",
+      "related_tickers": ["010120", "267260"],
+      "korea_market_impact_summary": null
+    },
+    {
+      "external_id": "wsj-cdmo-20260318",
+      "provider": "mock-wsj",
+      "source_type": "foreign",
+      "source_name": "WSJ",
+      "language": "en",
+      "title": "Biotech financing rebound revives outsourced manufacturing demand",
+      "summary": "Improved funding conditions are pushing emerging biotech companies to lock in commercial-scale manufacturing capacity earlier.",
+      "translated_summary_ko": "바이오 자금 조달 여건이 개선되면서 신약 개발사들이 상업 생산 물량을 더 이르게 확보하려는 움직임을 보이고 있다.",
+      "published_at": "2026-03-18T20:10:00+09:00",
+      "url": "https://example.com/wsj-cdmo-20260318",
+      "themes": ["biopharma-cdmo"],
+      "cluster_key": "cdmo-demand-rebound",
+      "cluster_headline": "글로벌 CDMO 수요 회복",
+      "related_tickers": ["207940"],
+      "korea_market_impact_summary": "대형 CDMO의 신규 수주와 가동률 개선 기대를 높일 수 있다."
+    },
+    {
+      "external_id": "hankyung-robot-20260319",
+      "provider": "mock-hankyung",
+      "source_type": "domestic",
+      "source_name": "한국경제",
+      "language": "ko",
+      "title": "국내 제조업, AI 결합 협동로봇 도입 확산 조짐",
+      "summary": "자동차·전자 부품사에서 AI 비전과 결합한 협동로봇 도입 검토가 확산되고 있다는 진단이 나왔다.",
+      "translated_summary_ko": null,
+      "published_at": "2026-03-19T08:10:00+09:00",
+      "url": "https://example.com/hankyung-robot-20260319",
+      "themes": ["robotics-smartfactory"],
+      "cluster_key": "smartfactory-upgrade",
+      "cluster_headline": "AI 결합 스마트팩토리 투자",
+      "related_tickers": ["277810", "010120"],
+      "korea_market_impact_summary": null
+    }
+  ]
+}

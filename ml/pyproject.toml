@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "newsalpha-ml"
+version = "0.1.0"
+description = "Baseline ML pipelines for the NewsAlpha MVP"
+requires-python = ">=3.11"
+dependencies = [
+  "numpy>=2.2.0",
+  "pandas>=2.2.3",
+  "polars>=1.17.1",
+  "scikit-learn>=1.5.2",
+  "lightgbm>=4.5.0",
+  "torch>=2.5.1"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3.0"
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["newsalpha_ml*"]
+

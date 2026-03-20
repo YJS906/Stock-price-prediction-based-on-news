@@ -1,0 +1,47 @@
+[
+  {
+    "modelName": "stock-relevance",
+    "version": "baseline-tfidf-logreg",
+    "updatedAt": "2026-03-19T09:00:00+09:00",
+    "summary": "주식 관련 기사 판별 모델의 baseline 평가 결과",
+    "metrics": [
+      { "label": "Macro F1", "value": "0.82", "note": "mock holdout" },
+      { "label": "Precision", "value": "0.87", "note": "잡음 억제 우선" },
+      { "label": "Recall", "value": "0.78", "note": "보수적 필터" }
+    ]
+  },
+  {
+    "modelName": "theme-classifier",
+    "version": "baseline-ovr-linear",
+    "updatedAt": "2026-03-19T09:00:00+09:00",
+    "summary": "핵심 투자 테마를 멀티라벨로 분류하는 baseline 결과",
+    "metrics": [
+      { "label": "Micro F1", "value": "0.79", "note": "multi-label" },
+      { "label": "Coverage", "value": "0.91", "note": "상위 6개 테마" },
+      { "label": "Brier", "value": "0.08", "note": "확률 calibration" }
+    ]
+  },
+  {
+    "modelName": "stock-ranking",
+    "version": "heuristic-gbr",
+    "updatedAt": "2026-03-19T09:00:00+09:00",
+    "summary": "기사/테마/종목 링크를 수혜 순위로 변환하는 baseline 결과",
+    "metrics": [
+      { "label": "NDCG@10", "value": "0.68", "note": "mock reaction set" },
+      { "label": "Top10 HitRate", "value": "0.61", "note": "event response" },
+      { "label": "Explainability", "value": "High", "note": "feature-based reasons" }
+    ]
+  },
+  {
+    "modelName": "short-horizon-forecast",
+    "version": "baseline-random-forest",
+    "updatedAt": "2026-03-19T09:00:00+09:00",
+    "summary": "단기 방향성과 종가 밴드 예측 baseline 결과",
+    "metrics": [
+      { "label": "Brier", "value": "0.19", "note": "directional" },
+      { "label": "Coverage 80%", "value": "0.77", "note": "close band" },
+      { "label": "MAE", "value": "0.84%", "note": "mock walk-forward" }
+    ]
+  }
+]
+

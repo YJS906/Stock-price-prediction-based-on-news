@@ -1,0 +1,33 @@
+[
+  {
+    "slug": "ai-infrastructure",
+    "name_ko": "AI 인프라",
+    "description_ko": "HBM, 패키징, 데이터센터 전력 증설과 연결되는 국내 수혜군"
+  },
+  {
+    "slug": "defense-space",
+    "name_ko": "방산·우주",
+    "description_ko": "유럽·중동 방산 수요와 위성/추진체 공급망 확대"
+  },
+  {
+    "slug": "power-grid-nuclear",
+    "name_ko": "전력망·원전",
+    "description_ko": "변압기, HVDC, 원전 기자재, 전력 효율화"
+  },
+  {
+    "slug": "secondary-battery",
+    "name_ko": "2차전지",
+    "description_ko": "양극재, 배터리 셀, ESS와 미국 정책 수혜"
+  },
+  {
+    "slug": "biopharma-cdmo",
+    "name_ko": "바이오·CDMO",
+    "description_ko": "글로벌 제약 위탁생산 및 바이오 자금조달 회복"
+  },
+  {
+    "slug": "robotics-smartfactory",
+    "name_ko": "로봇·스마트팩토리",
+    "description_ko": "협동로봇, 공장 자동화, AI 기반 생산성 향상"
+  }
+]
+
