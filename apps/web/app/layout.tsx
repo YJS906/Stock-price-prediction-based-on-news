@@ -18,7 +18,7 @@ const displayFont = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: "NewsAlpha | 한국 주식 뉴스 인텔리전스",
-  description: "뉴스, 테마, 종목 랭킹, 단기 예측을 연결하는 한국 주식 보조 플랫폼"
+  description: "실시간 뉴스, 테마, 종목 연결, 차트, 예측 밴드를 한 화면에서 보는 한국 주식 보조 플랫폼"
 };
 
 export const dynamic = "force-dynamic";

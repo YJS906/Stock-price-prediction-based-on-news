@@ -12,7 +12,7 @@ export function MarketSummary({ cards }: { cards: MarketSummaryCard[] }) {
             <CardTitle className="text-3xl">{card.value}</CardTitle>
           </CardHeader>
           <CardContent className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">{card.change ?? "실시간 API 연결 전 mock 집계"}</span>
+            <span className="text-muted-foreground">{card.change ?? "실시간 상태 지표"}</span>
             <span
               className={
                 card.tone === "positive"
@@ -22,7 +22,7 @@ export function MarketSummary({ cards }: { cards: MarketSummaryCard[] }) {
                     : "text-cyan-200"
               }
             >
-              {card.tone === "positive" ? "상방 우위" : card.tone === "negative" ? "경계" : "중립"}
+              {card.tone === "positive" ? "강세" : card.tone === "negative" ? "주의" : "중립"}
             </span>
           </CardContent>
         </Card>
@@ -30,4 +30,3 @@ export function MarketSummary({ cards }: { cards: MarketSummaryCard[] }) {
     </div>
   );
 }
-

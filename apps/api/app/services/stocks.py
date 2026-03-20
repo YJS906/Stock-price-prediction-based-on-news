@@ -5,6 +5,8 @@ from app.services.presenters import (
     _current_price,
     _day_change_pct,
     _previous_close,
+    available_chart_timeframes,
+    default_chart_timeframe,
     explanation_card,
     forecast_widget,
     price_series,
@@ -46,6 +48,8 @@ class StockService:
 
         current_price = _current_price(stock)
         previous_close = _previous_close(stock)
+        chart_timeframes = available_chart_timeframes(stock)
+        default_timeframe = default_chart_timeframe(stock)
 
         return {
             "ticker": stock.ticker,
@@ -65,6 +69,8 @@ class StockService:
             "priceTimeframe": meta["priceTimeframe"],
             "priceSource": meta["priceSource"],
             "priceUpdatedAt": meta["priceUpdatedAt"],
+            "chartTimeframes": chart_timeframes,
+            "defaultChartTimeframe": default_timeframe,
             "bestBid": meta["bestBid"],
             "bestAsk": meta["bestAsk"],
             "timeline": [
@@ -77,7 +83,7 @@ class StockService:
                 }
                 for link in ordered_links[:8]
             ],
-            "priceSeries": series,
+            "priceSeries": price_series(stock, default_timeframe) or series,
         }
 
     def get_stock_forecast(self, ticker: str):
@@ -102,3 +108,22 @@ class StockService:
             }
             for link in ordered_links
         ]
+
+    def get_stock_chart(self, ticker: str, timeframe: str):
+        stock = self.repo.get_by_ticker(ticker)
+        if stock is None:
+            return None
+
+        meta = quote_meta(stock)
+        chart_timeframes = available_chart_timeframes(stock)
+        selected = timeframe if timeframe in chart_timeframes else default_chart_timeframe(stock)
+        source_row = next((row for row in stock.prices if row.timeframe == selected), None)
+
+        return {
+            "ticker": stock.ticker,
+            "timeframe": selected,
+            "source": source_row.source if source_row else meta["priceSource"],
+            "updatedAt": meta["priceUpdatedAt"],
+            "availableTimeframes": chart_timeframes,
+            "points": price_series(stock, selected),
+        }

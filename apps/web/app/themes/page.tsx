@@ -9,11 +9,10 @@ export default async function ThemesPage() {
     <section className="space-y-6">
       <SectionHeading
         eyebrow="Theme Universe"
-        title="국내 주식 중심 테마 맵"
-        description="국내 뉴스와 미국/해외 뉴스를 함께 반영한 한국 주식 테마 분류 결과입니다."
+        title="한국 주식 핵심 테마 맵"
+        description="국내 뉴스와 해외 뉴스 영향을 함께 반영해 현재 주목도가 높은 투자 테마를 정리했습니다."
       />
       <ThemeGrid themes={themes} />
     </section>
   );
 }
-

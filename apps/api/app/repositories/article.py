@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.models import Article, StockNewsLink
+from app.models import Article, StockNewsLink, Theme
 
 
 class ArticleRepository:
@@ -22,6 +22,22 @@ class ArticleRepository:
             .limit(limit)
         )
         return list(self.db.scalars(statement).all())
+
+    def list_articles_by_theme(self, theme_slug: str, limit: int = 30) -> list[Article]:
+        statement = (
+            select(Article)
+            .join(Article.themes)
+            .where(Article.is_stock_relevant.is_(True), Theme.slug == theme_slug)
+            .options(
+                selectinload(Article.themes),
+                selectinload(Article.stock_links).selectinload(StockNewsLink.stock),
+                selectinload(Article.foreign_impact),
+                selectinload(Article.clusters),
+            )
+            .order_by(Article.published_at.desc())
+            .limit(limit)
+        )
+        return list(self.db.scalars(statement).unique().all())
 
     def get_article(self, article_id: str) -> Article | None:
         statement = (

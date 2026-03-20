@@ -1,83 +1,87 @@
 # Verification Notes
 
-## Machine setup performed
+## Verified On
 
-- Installed Node.js LTS 24.14.0 via `winget`
-- Installed Python 3.11.9 via `winget`
-- Created repo-local virtualenv at `/.venv`
-- Installed backend dependencies from `apps/api`
-- Installed frontend dependencies from workspace root
-- Installed ML dependencies from `ml`
+- Date: 2026-03-20
+- Local timezone: Asia/Seoul
+- Workspace: `C:\Users\YEO_JINSEUNG\OneDrive\바탕 화면\news`
 
-## Checks completed successfully
+## Runtime Setup Used
 
-### Backend
+- Python: repo-local virtualenv at `/.venv`
+- API env: [`apps/api/.env`](../apps/api/.env)
+- API DB: local SQLite demo database
+- News mode: `mock`
+- Market data mode: `mock`
+- Web runtime: Next.js production server on port `3000`
+- API runtime: Uvicorn on port `8000`
+- Node fallback used in this environment:
+  `C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VisualStudio\NodeJs\`
 
-- `pytest -p no:cacheprovider` in `apps/api`
-- Result: `5 passed`
+## Automated Checks
 
-### Frontend
+### API
 
-- `npm --workspace apps/web run build`
-- `npm --workspace apps/web run lint`
-- `npm --workspace apps/web run typecheck`
+- Command: `python -m pytest -p no:cacheprovider`
+- Working directory: `apps/api`
+- Result: `7 passed`
 
 ### ML
 
-- `pytest -p no:cacheprovider` in `ml`
-- `python scripts/train_baselines.py`
-- Result:
-  - `stock-relevance`: accuracy `0.8`
-  - `theme-classifier`: subset_accuracy `0.2`
-  - `stock-ranking`: r2 `1.0`
-  - `short-horizon-forecast`: r2 `0.9851`
+- Command: `python -m pytest -p no:cacheprovider`
+- Working directory: `ml`
+- Result: `3 passed`
 
-### Live HTTP validation
+### Web
 
-- API:
-  - `GET /api/v1/health` -> `200`
-  - `GET /api/v1/dashboard` -> `200`
-- Web:
-  - `GET /` -> `200`
-  - `GET /themes` -> `200`
-  - `GET /stocks` -> `200`
+- Command: `npm --workspace apps/web run typecheck`
+- Result: passed
+- Command: `npm --workspace apps/web run lint`
+- Result: passed
+- Command: `npm --workspace apps/web run build`
+- Result: passed
 
-## Fixes made during runtime validation
+## Live API Validation
 
-- Changed npm workspace package name from invalid `apps/web` to `@newsalpha/web`
-- Fixed server-component build strategy to use dynamic/no-store fetching so `next build` does not require the API at build time
-- Fixed article-theme persistence order in ingestion pipeline
-- Expanded relevance keywords so mock defense/biotech articles are correctly classified as stock-relevant
-- Fixed mock embedding dimensionality to match `vector(384)`
-- Added Windows Docker preflight and elevated setup helpers with transcript logging
-- Added Docker Desktop binary path detection to Windows scripts so `docker` works even when PATH is stale
-- Added DB init retries plus Compose healthchecks to remove the Postgres startup race in containers
+- `GET /api/v1/health` -> `200`
+- `GET /api/v1/articles/live?limit=10` -> `200`
+- `GET /api/v1/articles/live?theme=power-grid-nuclear&limit=10` -> `200`
+- `GET /api/v1/stocks/000660/chart?timeframe=1d` -> `200`
+- `GET /api/v1/stocks/000660/forecast` -> `200`
 
-## Docker validation completed on 2026-03-20
+### Real-time Feed Check
 
-- Installed WSL package `2.6.3`
-- Installed Docker Desktop `4.65.0`
-- Verified Docker Engine `29.2.1`
-- Ran `docker compose -f infra/docker-compose.yml up --build -d`
-- Verified `docker compose ps` shows all services running, with healthy `postgres` and `redis`
-- Verified `GET /api/v1/health` -> `200`
-- Verified `GET /api/v1/dashboard` -> `200`
-- Verified `GET /` -> `200`
-- Verified `GET /themes` -> `200`
-- Verified `GET /stocks` -> `200`
+The core product behavior was revalidated after restarting the API with the latest code.
 
-## Post-reboot check on 2026-03-19
+1. `POST /api/v1/admin/seed/reset`
+2. Immediate article count: `6`
+3. Waited about `25` seconds
+4. Live feed count after polling refresh: `8`
 
-- `node -v` -> `v24.14.0`
-- `py -V` -> `Python 3.11.9`
-- `docker --version` -> command not found
-- `wsl --status` -> WSL not installed
-- `dism.exe /online /Get-FeatureInfo ...` -> requires elevated permissions in the current shell
-- `winget install -e --id Docker.DockerDesktop ...` -> installer reached the administrator handoff step and then failed with exit code `4294967291`
+Confirmed behavior:
 
-## Added recovery helpers
+- reset starts with 3 domestic + 3 foreign articles
+- new articles are added without page refresh
+- newest articles stay at the top of the feed
+- live endpoint returns `pollingIntervalMs = 10000`
 
-- `infra/scripts/windows-preflight.ps1`
-- `infra/scripts/windows-enable-docker-prereqs.ps1`
-- `docs/windows-docker-troubleshooting.md`
-- `docs/windows-enable-run.log`
+## Web Route Smoke Checks
+
+- `GET http://localhost:3000/` -> `200`
+- `GET http://localhost:3000/articles` -> `200`
+- `GET http://localhost:3000/themes` -> `200`
+- `GET http://localhost:3000/stocks/000660` -> `200`
+
+## Implementation Notes Confirmed During Verification
+
+- Live feed uses polling instead of WebSocket for MVP simplicity and lower operational overhead.
+- Ingest refresh is throttled on the backend to avoid repeated provider fetches on every client poll.
+- Local API config now prefers [`apps/api/.env`](../apps/api/.env) over the root `.env`, which prevents accidental use of the Docker/Postgres connection string during local development.
+- Mock market data now provides chart points for `1m`, `1d`, `1w`, and `1mo`.
+- Stock detail responses include chart timeframe metadata and the dedicated chart endpoint.
+
+## Fixes Applied In This Verification Pass
+
+- Removed duplicate stale Uvicorn processes and restarted the API with the repo-local Python runtime.
+- Revalidated mock release timing so `seed/reset` no longer loads the full article set immediately.
+- Updated README to reflect the real local run path, polling-based real-time feed design, and current API surface.

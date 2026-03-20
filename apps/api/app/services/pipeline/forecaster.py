@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, timedelta
+from math import cos, sin
 
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
@@ -52,7 +53,7 @@ class ForecastEngine:
         return stored > 0
 
     def _rebuild_mock_market_prices(self, db: Session) -> None:
-        now = datetime.now(UTC).replace(minute=0, second=0, microsecond=0)
+        now = datetime.now(UTC).replace(second=0, microsecond=0)
         seeds = {
             "000660": 182000,
             "042700": 126400,
@@ -70,26 +71,127 @@ class ForecastEngine:
 
         for stock in db.scalars(select(Stock)).all():
             base = seeds.get(stock.ticker, 50000)
-            drift = ((sum(ord(char) for char in stock.ticker) % 11) - 5) / 1000
-            for step in range(24):
-                bucket_at = now - timedelta(hours=23 - step)
-                open_price = round(base * (1 + drift * step / 4), 2)
-                close_price = round(open_price * (1 + drift + ((step % 3) - 1) * 0.002), 2)
-                high_price = max(open_price, close_price) * 1.006
-                low_price = min(open_price, close_price) * 0.995
+            drift = ((sum(ord(char) for char in stock.ticker) % 11) - 5) / 900
+            phase = (sum(ord(char) for char in stock.name_ko) % 7) / 3
+
+            daily_rows = self._build_series(
+                timeframe="1d",
+                source="mock-day",
+                periods=240,
+                end_at=now,
+                step=timedelta(days=1),
+                base=base * 0.88,
+                drift=drift / 6,
+                phase=phase,
+                volume_seed=180000,
+            )
+            weekly_rows = self._build_series(
+                timeframe="1w",
+                source="mock-week",
+                periods=104,
+                end_at=now,
+                step=timedelta(days=7),
+                base=base * 0.82,
+                drift=drift / 4,
+                phase=phase + 0.6,
+                volume_seed=720000,
+            )
+            monthly_rows = self._build_series(
+                timeframe="1mo",
+                source="mock-month",
+                periods=60,
+                end_at=now,
+                step=timedelta(days=30),
+                base=base * 0.7,
+                drift=drift / 3,
+                phase=phase + 1.4,
+                volume_seed=2200000,
+            )
+
+            previous_close = daily_rows[-2]["close"] if len(daily_rows) > 1 else daily_rows[-1]["close"]
+            minute_rows = self._build_series(
+                timeframe="1m",
+                source="mock-minute",
+                periods=180,
+                end_at=now,
+                step=timedelta(minutes=1),
+                base=daily_rows[-1]["close"],
+                drift=drift / 30,
+                phase=phase + 1.1,
+                volume_seed=4200,
+            )
+            best_bid = round(minute_rows[-1]["close"] * 0.999, 2)
+            best_ask = round(minute_rows[-1]["close"] * 1.001, 2)
+
+            for row in minute_rows:
+                row["extra"] = {
+                    **(row.get("extra") or {}),
+                    "session": "mock",
+                    "updated_at": minute_rows[-1]["bucket_at"].isoformat(),
+                    "previous_close": previous_close,
+                    "best_bid": best_bid,
+                    "best_ask": best_ask,
+                }
+
+            for row in [*minute_rows, *daily_rows, *weekly_rows, *monthly_rows]:
                 db.add(
                     MarketPrice(
                         stock_id=stock.id,
-                        bucket_at=bucket_at,
-                        timeframe="1h",
-                        open=open_price,
-                        high=round(high_price, 2),
-                        low=round(low_price, 2),
-                        close=close_price,
-                        volume=80000 + step * 1250,
-                        extra={"session": "mock"},
+                        bucket_at=row["bucket_at"],
+                        timeframe=row["timeframe"],
+                        open=row["open"],
+                        high=row["high"],
+                        low=row["low"],
+                        close=row["close"],
+                        volume=row["volume"],
+                        source=row["source"],
+                        extra=row.get("extra") or {"session": "mock"},
                     )
                 )
+
+    def _build_series(
+        self,
+        timeframe: str,
+        source: str,
+        periods: int,
+        end_at: datetime,
+        step: timedelta,
+        base: float,
+        drift: float,
+        phase: float,
+        volume_seed: int,
+    ) -> list[dict]:
+        rows: list[dict] = []
+        previous_close = base
+
+        for index in range(periods):
+            ratio = index / max(periods - 1, 1)
+            trend = 1 + drift * ratio
+            cycle = sin(index / 4 + phase) * 0.018
+            pulse = cos(index / 9 + phase) * 0.009
+
+            close_price = round(base * trend * (1 + cycle + pulse), 2)
+            open_price = round(previous_close, 2)
+            high_price = round(max(open_price, close_price) * (1 + 0.0035 + abs(cycle) * 0.2), 2)
+            low_price = round(min(open_price, close_price) * (1 - 0.003 - abs(pulse) * 0.15), 2)
+            bucket_at = end_at - step * (periods - index - 1)
+
+            rows.append(
+                {
+                    "bucket_at": bucket_at,
+                    "timeframe": timeframe,
+                    "open": open_price,
+                    "high": high_price,
+                    "low": low_price,
+                    "close": close_price,
+                    "volume": int(volume_seed * (1 + (abs(cycle) + abs(pulse)) * 8 + (index % 5) * 0.04)),
+                    "source": source,
+                    "extra": {"session": "mock"},
+                }
+            )
+            previous_close = close_price
+
+        return rows
 
     def rebuild_forecasts(self, db: Session) -> None:
         db.execute(delete(Forecast))
@@ -97,9 +199,7 @@ class ForecastEngine:
         ranking_lookup = {item["ticker"]: item for item in (dashboard_snapshot.items if dashboard_snapshot else [])}
 
         for stock in db.scalars(select(Stock)).all():
-            candles = db.scalars(
-                select(MarketPrice).where(MarketPrice.stock_id == stock.id).order_by(MarketPrice.bucket_at.asc())
-            ).all()
+            candles = self._forecast_candles(db, stock.id)
             if len(candles) < 2:
                 continue
 
@@ -159,3 +259,14 @@ class ForecastEngine:
                     expires_at=datetime.utcnow() + timedelta(hours=6),
                 )
             )
+
+    def _forecast_candles(self, db: Session, stock_id) -> list[MarketPrice]:
+        for timeframe in ("1d", "1m", "1w", "1mo"):
+            candles = db.scalars(
+                select(MarketPrice)
+                .where(MarketPrice.stock_id == stock_id, MarketPrice.timeframe == timeframe)
+                .order_by(MarketPrice.bucket_at.asc())
+            ).all()
+            if candles:
+                return candles
+        return []

@@ -21,7 +21,7 @@ export function TopNav() {
           </div>
           <div>
             <div className="font-semibold tracking-[0.2em] text-white/90">NEWSALPHA</div>
-            <div className="text-xs text-muted-foreground">한국 주식 뉴스 기반 매매 보조</div>
+            <div className="text-xs text-muted-foreground">한국 주식 뉴스 기반 투자 보조</div>
           </div>
         </Link>
 
@@ -37,9 +37,8 @@ export function TopNav() {
           ))}
         </nav>
 
-        <Badge variant="info">확률 기반 보조 지표</Badge>
+        <Badge variant="info">실시간 피드 중심</Badge>
       </div>
     </header>
   );
 }
-

@@ -33,6 +33,10 @@ export interface NewsCard {
   sentimentScore: number;
   importanceLabel: string;
   url: string;
+  linkedStocks: Array<{
+    ticker: string;
+    nameKo: string;
+  }>;
 }
 
 export interface RankingEntry {
@@ -150,6 +154,25 @@ export interface PricePoint {
   volume: number;
 }
 
+export interface StockListItem {
+  ticker: string;
+  nameKo: string;
+  market: string;
+  sector: string;
+  currentPrice: number;
+  dayChangePct: number;
+  themes: string[];
+}
+
+export interface StockChartResponse {
+  ticker: string;
+  timeframe: string;
+  source: string;
+  updatedAt?: string | null;
+  availableTimeframes: string[];
+  points: PricePoint[];
+}
+
 export interface StockDetailResponse {
   ticker: string;
   nameKo: string;
@@ -168,10 +191,19 @@ export interface StockDetailResponse {
   priceTimeframe: string;
   priceSource: string;
   priceUpdatedAt?: string | null;
+  chartTimeframes: string[];
+  defaultChartTimeframe: string;
   bestBid?: number | null;
   bestAsk?: number | null;
   timeline: TimelineItem[];
   priceSeries: PricePoint[];
+}
+
+export interface LiveNewsResponse {
+  generatedAt: string;
+  pollingIntervalMs: number;
+  themeSlug?: string | null;
+  items: NewsCard[];
 }
 
 export interface PipelineStatusResponse {

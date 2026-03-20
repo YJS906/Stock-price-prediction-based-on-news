@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.enums import RankingScope
-from app.models import Article, ArticleCluster, RankingSnapshot, StockThemeLink, Theme
+from app.models import Article, ArticleCluster, RankingSnapshot, StockNewsLink, StockThemeLink, Theme
 
 
 class DashboardRepository:
@@ -22,7 +22,11 @@ class DashboardRepository:
         statement = (
             select(Article)
             .where(Article.is_stock_relevant.is_(True))
-            .options(selectinload(Article.themes), selectinload(Article.stock_links), selectinload(Article.foreign_impact))
+            .options(
+                selectinload(Article.themes),
+                selectinload(Article.stock_links).selectinload(StockNewsLink.stock),
+                selectinload(Article.foreign_impact),
+            )
             .order_by(Article.published_at.desc())
             .limit(limit)
         )

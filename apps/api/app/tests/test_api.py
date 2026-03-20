@@ -5,6 +5,7 @@ def test_dashboard_endpoint(client):
     assert payload["topThemes"]
     assert payload["latestNews"]
     assert payload["featuredRanking"]
+    assert "linkedStocks" in payload["latestNews"][0]
 
 
 def test_stock_detail_endpoint(client):
@@ -16,6 +17,25 @@ def test_stock_detail_endpoint(client):
     assert payload["timeline"]
     assert payload["priceTimeframe"]
     assert payload["priceSource"]
+    assert payload["chartTimeframes"]
+    assert payload["defaultChartTimeframe"]
+
+
+def test_live_articles_endpoint(client):
+    response = client.get("/api/v1/articles/live")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["items"]
+    assert payload["pollingIntervalMs"] > 0
+
+
+def test_stock_chart_endpoint(client):
+    response = client.get("/api/v1/stocks/000660/chart?timeframe=1w")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["timeframe"] == "1w"
+    assert payload["availableTimeframes"]
+    assert payload["points"]
 
 
 def test_theme_and_article_flow(client):

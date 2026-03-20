@@ -1,48 +1,24 @@
-import Link from "next/link";
-import { formatDateTime } from "@newsalpha/shared";
-
+import { NewsStream } from "@/components/dashboard/news-stream";
 import { SectionHeading } from "@/components/dashboard/section-heading";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getArticles } from "@/lib/api";
+import { getArticles, getThemes } from "@/lib/api";
 
 export default async function ArticlesPage() {
-  const articles = await getArticles();
+  const [articles, themes] = await Promise.all([getArticles(), getThemes()]);
 
   return (
     <section className="space-y-6">
-      <SectionHeading eyebrow="Filtered Feed" title="주식 관련 뉴스 피드" description="주식과 무관한 사회/연예/사건성 기사는 제거한 흐름입니다." />
-      <div className="grid gap-4">
-        {articles.map((article) => (
-          <Link key={article.id} href={`/articles/${article.id}`}>
-            <Card className="transition hover:border-cyan-400/30">
-              <CardHeader>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant={article.sourceType === "foreign" ? "warning" : "default"}>
-                    {article.sourceType === "foreign" ? "해외" : "국내"}
-                  </Badge>
-                  {article.themes.map((theme) => (
-                    <Badge key={`${article.id}-${theme}`} variant="info">
-                      {theme}
-                    </Badge>
-                  ))}
-                </div>
-                <CardTitle>{article.title}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-sm leading-6 text-muted-foreground">{article.translatedSummaryKo ?? article.summary}</p>
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>
-                    {article.sourceName} · {formatDateTime(article.publishedAt)}
-                  </span>
-                  <span>중요도 {article.importanceLabel}</span>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-      </div>
+      <SectionHeading
+        eyebrow="Filtered Feed"
+        title="실시간 주식 뉴스 피드"
+        description="연예·사건·라이프스타일 등 투자와 직접 관련 없는 뉴스는 제외하고, 최신 기사만 자동으로 반영합니다."
+      />
+      <NewsStream
+        items={articles}
+        themeOptions={themes.map((theme) => ({ slug: theme.slug, name: theme.name }))}
+        title="실시간 뉴스 목록"
+        description="새 뉴스는 페이지 새로고침 없이 최상단에 추가됩니다."
+        limit={20}
+      />
     </section>
   );
 }
-

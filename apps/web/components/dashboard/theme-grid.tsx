@@ -21,7 +21,7 @@ export function ThemeGrid({ themes }: { themes: ThemeCard[] }) {
               <p className="text-sm leading-6 text-muted-foreground">{theme.description}</p>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-white/80">관련 기사 {theme.articleCount}건</span>
-                <span className="text-muted-foreground">모멘텀 중심 보기</span>
+                <span className="text-muted-foreground">테마 상세 보기</span>
               </div>
               <p className="rounded-2xl border border-white/8 bg-white/5 p-3 text-sm text-white/82">{theme.leadNarrative}</p>
             </CardContent>
@@ -31,4 +31,3 @@ export function ThemeGrid({ themes }: { themes: ThemeCard[] }) {
     </div>
   );
 }
-

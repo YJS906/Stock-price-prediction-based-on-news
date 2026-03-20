@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.enums import RankingScope
-from app.models import Article, RankingSnapshot, StockThemeLink, Theme
+from app.models import Article, RankingSnapshot, StockNewsLink, StockThemeLink, Theme
 
 
 class ThemeRepository:
@@ -38,7 +38,11 @@ class ThemeRepository:
             select(Article)
             .join(Article.themes)
             .where(Theme.id == theme_id)
-            .options(selectinload(Article.themes), selectinload(Article.stock_links), selectinload(Article.clusters))
+            .options(
+                selectinload(Article.themes),
+                selectinload(Article.stock_links).selectinload(StockNewsLink.stock),
+                selectinload(Article.clusters),
+            )
             .order_by(Article.published_at.desc())
             .limit(limit)
         )

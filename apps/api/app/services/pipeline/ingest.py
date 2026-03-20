@@ -83,6 +83,7 @@ class IngestionPipelineService:
             articles_seen += len(fetched)
             for raw_article in fetched:
                 normalized = self.normalizer.normalize(raw_article)
+                published_at = self._as_utc_naive(normalized.published_at)
                 if self.deduper.is_duplicate(db, normalized):
                     continue
 
@@ -97,7 +98,7 @@ class IngestionPipelineService:
                     summary=normalized.summary,
                     body=normalized.body,
                     translated_summary_ko=normalized.translated_summary_ko,
-                    published_at=normalized.published_at,
+                    published_at=published_at,
                     language=normalized.language,
                     authors=normalized.authors,
                     image_url=normalized.image_url,
@@ -126,14 +127,17 @@ class IngestionPipelineService:
                         summary=normalized.summary,
                         theme_signal=max(theme_scores.values()) if theme_scores else 0.4,
                         article_count=0,
-                        latest_published_at=normalized.published_at,
+                        latest_published_at=published_at,
                         extra={"theme_hints": list(theme_scores.keys())},
                     )
                     db.add(cluster)
                     db.flush()
 
                 cluster.article_count += 1
-                cluster.latest_published_at = max(cluster.latest_published_at, normalized.published_at)
+                cluster.latest_published_at = max(
+                    self._as_utc_naive(cluster.latest_published_at),
+                    published_at,
+                )
                 cluster.articles.append(article)
                 cluster_registry[cluster_key] = cluster
 
@@ -211,3 +215,8 @@ class IngestionPipelineService:
             "relevant_articles": relevant,
             "providers": provider_statuses,
         }
+
+    def _as_utc_naive(self, value: datetime) -> datetime:
+        if value.tzinfo is None:
+            return value
+        return value.astimezone(UTC).replace(tzinfo=None)

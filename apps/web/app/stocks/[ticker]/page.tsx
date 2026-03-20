@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { formatPercent, formatWon } from "@newsalpha/shared";
 
 import { ForecastChart } from "@/components/charts/forecast-chart";
-import { PriceChart } from "@/components/charts/price-chart";
+import { StockChartPanel } from "@/components/stocks/stock-chart-panel";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,9 +19,11 @@ function formatUpdatedAt(value?: string | null) {
 }
 
 function sourceLabel(source: string) {
-  if (source === "naver-minute") return "네이버 금융 분봉";
-  if (source === "naver-day") return "네이버 금융 일봉";
-  return "모의 데이터";
+  if (source === "naver-minute") return "네이버 증권 분봉";
+  if (source === "naver-day") return "네이버 증권 일봉";
+  if (source === "mock-minute") return "Mock 분봉";
+  if (source === "mock-day") return "Mock 일봉";
+  return "시세 피드";
 }
 
 export default async function StockDetailPage({ params }: { params: { ticker: string } }) {
@@ -49,7 +51,7 @@ export default async function StockDetailPage({ params }: { params: { ticker: st
               <p className="max-w-3xl text-sm leading-7 text-muted-foreground">{stock.description}</p>
               <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                 <Badge variant="info">{sourceLabel(stock.priceSource)}</Badge>
-                <span>{stock.priceTimeframe === "1d" ? "일봉 기준" : "장중 체결 기준"}</span>
+                <span>{stock.priceTimeframe === "1m" ? "실시간 체결 기준" : "종가 기준"}</span>
                 <span>마지막 갱신 {formatUpdatedAt(stock.priceUpdatedAt)}</span>
               </div>
             </div>
@@ -89,15 +91,20 @@ export default async function StockDetailPage({ params }: { params: { ticker: st
         <div className="grid gap-6 xl:grid-cols-[1.3fr_0.9fr]">
           <Card>
             <CardHeader>
-              <CardTitle>가격 흐름</CardTitle>
+              <CardTitle>차트 분석</CardTitle>
             </CardHeader>
             <CardContent>
-              <PriceChart data={stock.priceSeries} timeframe={stock.priceTimeframe} />
+              <StockChartPanel
+                ticker={stock.ticker}
+                initialTimeframe={stock.defaultChartTimeframe}
+                initialPoints={stock.priceSeries}
+                availableTimeframes={stock.chartTimeframes}
+              />
             </CardContent>
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>단기 방향성 확률</CardTitle>
+              <CardTitle>단기 방향성 예측</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <ForecastChart forecast={stock.forecast} />
@@ -106,6 +113,9 @@ export default async function StockDetailPage({ params }: { params: { ticker: st
                 <div className="mt-3 text-lg font-semibold text-cyan-200">
                   {formatWon(stock.forecast.closeBand.low)} - {formatWon(stock.forecast.closeBand.high)}
                 </div>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  중심값 {formatWon(stock.forecast.closeBand.base)} / 신뢰도 {(stock.forecast.confidence * 100).toFixed(0)}점
+                </p>
               </div>
               <p className="rounded-2xl border border-amber-400/20 bg-amber-400/10 p-3 text-sm leading-6 text-amber-100">
                 {stock.forecast.disclaimer}
@@ -116,9 +126,9 @@ export default async function StockDetailPage({ params }: { params: { ticker: st
 
         <Tabs defaultValue="thesis">
           <TabsList>
-            <TabsTrigger value="thesis">랭킹 근거</TabsTrigger>
+            <TabsTrigger value="thesis">분석 카드</TabsTrigger>
             <TabsTrigger value="timeline">관련 뉴스</TabsTrigger>
-            <TabsTrigger value="intraday">장중 전망</TabsTrigger>
+            <TabsTrigger value="intraday">시간대별 전망</TabsTrigger>
           </TabsList>
 
           <TabsContent value="thesis">
@@ -137,6 +147,15 @@ export default async function StockDetailPage({ params }: { params: { ticker: st
                         </li>
                       ))}
                     </ul>
+                    {card.riskFlags.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {card.riskFlags.map((risk) => (
+                          <Badge key={`${card.title}-${risk}`} variant="warning">
+                            {risk}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : null}
                   </CardContent>
                 </Card>
               ))}
@@ -167,7 +186,7 @@ export default async function StockDetailPage({ params }: { params: { ticker: st
           <TabsContent value="intraday">
             <Card>
               <CardHeader>
-                <CardTitle>장중 시간 구간별 전망</CardTitle>
+                <CardTitle>시간대별 방향성 전망</CardTitle>
               </CardHeader>
               <CardContent className="grid gap-4 lg:grid-cols-3">
                 {stock.forecast.intradayOutlook.map((point) => (
@@ -185,7 +204,7 @@ export default async function StockDetailPage({ params }: { params: { ticker: st
                       </div>
                       <div>
                         <div className="mb-1 flex justify-between text-xs text-muted-foreground">
-                          <span>중립</span>
+                          <span>보합</span>
                           <span>{Math.round(point.neutral * 100)}%</span>
                         </div>
                         <div className="h-2 rounded-full bg-white/8">

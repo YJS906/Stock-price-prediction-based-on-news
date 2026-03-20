@@ -37,7 +37,7 @@ export default async function ArticleDetailPage({ params }: { params: { id: stri
             <div className="flex flex-wrap gap-3">
               <Link href={article.url} target="_blank">
                 <Button>
-                  원문 열기
+                  원문 보기
                   <ExternalLink className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
@@ -49,26 +49,25 @@ export default async function ArticleDetailPage({ params }: { params: { id: stri
         {article.foreignImpact ? (
           <Card>
             <CardHeader>
-              <CardTitle>해외 뉴스의 국내 영향 해석</CardTitle>
+              <CardTitle>해외 뉴스의 국내 영향 분석</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-5 lg:grid-cols-2">
               <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
-                <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">한국어 번역 요약</p>
+                <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">한국어 요약</p>
                 <p className="mt-3 text-sm leading-7 text-slate-200">{article.foreignImpact.translatedSummaryKo}</p>
               </div>
               <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
-                <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">국내 파급 해석</p>
+                <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">국내 시장 해석</p>
                 <p className="mt-3 text-sm leading-7 text-slate-200">{article.foreignImpact.koreaImpactSummary}</p>
               </div>
             </CardContent>
           </Card>
         ) : null}
 
-        <RankingTable items={article.linkedStocks} title="이 기사와 가장 관련성이 높은 종목" />
+        <RankingTable items={article.linkedStocks} title="이 뉴스와 연결 강도가 높은 종목" />
       </div>
     );
   } catch {
     notFound();
   }
 }
-

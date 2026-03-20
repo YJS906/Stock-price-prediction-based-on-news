@@ -7,6 +7,7 @@ from app.core.config import get_settings
 from app.core.enums import MarketCode
 from app.models import Forecast, MarketPrice, Stock, StockThemeLink, Theme
 from app.services.pipeline.forecaster import ForecastEngine
+from app.services.pipeline.providers.mock_release import reset_mock_feed_clock
 from app.services.pipeline.ingest import IngestionPipelineService
 from app.services.pipeline.provider_registry import provider_groups
 
@@ -89,11 +90,16 @@ class SeedService:
 
     def seed_all(self, db: Session, force_reset: bool = False) -> dict:
         if force_reset:
+            reset_mock_feed_clock()
             self.reset_all(db)
 
         self.seed_reference(db)
         self.forecast_engine.rebuild_market_prices(db)
         db.commit()
+        return self.refresh_news(db)
+
+    def refresh_news(self, db: Session) -> dict:
+        self.seed_reference(db)
         last_payload: dict | None = None
         for providers in provider_groups():
             payload = self.pipeline.run(db, providers=providers)

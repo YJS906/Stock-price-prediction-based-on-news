@@ -4,7 +4,7 @@ import { formatPercent, formatWon, type RankingEntry } from "@newsalpha/shared";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export function RankingTable({ items, title = "상위 수혜 종목" }: { items: RankingEntry[]; title?: string }) {
+export function RankingTable({ items, title = "상위 반응 가능 종목" }: { items: RankingEntry[]; title?: string }) {
   return (
     <Card>
       <CardHeader>
@@ -16,8 +16,8 @@ export function RankingTable({ items, title = "상위 수혜 종목" }: { items:
             <tr>
               <th className="pb-3">종목</th>
               <th className="pb-3">현재가</th>
-              <th className="pb-3">당일</th>
-              <th className="pb-3">상승 잠재</th>
+              <th className="pb-3">등락률</th>
+              <th className="pb-3">상승 가능성</th>
               <th className="pb-3">근거</th>
             </tr>
           </thead>
@@ -56,4 +56,3 @@ export function RankingTable({ items, title = "상위 수혜 종목" }: { items:
     </Card>
   );
 }
-

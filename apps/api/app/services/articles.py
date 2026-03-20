@@ -12,8 +12,9 @@ class ArticleService:
         self.db = db
         self.repo = ArticleRepository(db)
 
-    def list_articles(self):
-        return [news_card(article) for article in self.repo.list_articles()]
+    def list_articles(self, theme_slug: str | None = None):
+        articles = self.repo.list_articles_by_theme(theme_slug) if theme_slug else self.repo.list_articles()
+        return [news_card(article) for article in articles]
 
     def get_article_detail(self, article_id: UUID) -> ArticleDetailResponseSchema | None:
         article = self.repo.get_article(article_id)
@@ -61,4 +62,3 @@ class ArticleService:
             cluster=cluster_card(article.clusters[0]) if article.clusters else None,
             foreignImpact=foreign,
         )
-

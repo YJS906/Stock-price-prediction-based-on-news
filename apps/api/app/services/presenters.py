@@ -3,13 +3,48 @@ from typing import Iterable
 
 from app.models import Article, ArticleCluster, ExplanationCard, Forecast, MarketPrice, Stock, Theme
 
+TIMEFRAME_ORDER = ("1m", "1d", "1w", "1mo")
+
+
+def _group_prices_by_timeframe(stock: Stock) -> dict[str, list[MarketPrice]]:
+    grouped: dict[str, list[MarketPrice]] = {}
+    for candle in stock.prices:
+        grouped.setdefault(candle.timeframe, []).append(candle)
+    for rows in grouped.values():
+        rows.sort(key=lambda item: item.bucket_at)
+    return grouped
+
+
+def available_chart_timeframes(stock: Stock) -> list[str]:
+    grouped = _group_prices_by_timeframe(stock)
+    return [timeframe for timeframe in TIMEFRAME_ORDER if timeframe in grouped]
+
+
+def default_chart_timeframe(stock: Stock) -> str:
+    grouped = _group_prices_by_timeframe(stock)
+    for timeframe in ("1d", "1w", "1mo", "1m"):
+        if timeframe in grouped:
+            return timeframe
+    return "1d"
+
+
+def _quote_timeframe(stock: Stock) -> str | None:
+    grouped = _group_prices_by_timeframe(stock)
+    for timeframe in ("1m", "1d", "1w", "1mo"):
+        if timeframe in grouped:
+            return timeframe
+    return None
+
 
 def _latest_candles(stock: Stock) -> tuple[MarketPrice | None, MarketPrice | None]:
-    if not stock.prices:
+    timeframe = _quote_timeframe(stock)
+    if timeframe is None:
         return None, None
-    ordered = sorted(stock.prices, key=lambda item: item.bucket_at)
-    latest = ordered[-1]
-    previous = ordered[-2] if len(ordered) > 1 else latest
+    rows = _group_prices_by_timeframe(stock).get(timeframe, [])
+    if not rows:
+        return None, None
+    latest = rows[-1]
+    previous = rows[-2] if len(rows) > 1 else latest
     return latest, previous
 
 
@@ -36,10 +71,11 @@ def _current_price(stock: Stock) -> float:
 
 
 def quote_meta(stock: Stock) -> dict:
+    timeframe = _quote_timeframe(stock)
     latest, _ = _latest_candles(stock)
     extra = latest.extra if latest and latest.extra else {}
     return {
-        "priceTimeframe": latest.timeframe if latest else "1h",
+        "priceTimeframe": timeframe or "1d",
         "priceSource": latest.source if latest else "mock-market",
         "priceUpdatedAt": extra.get("updated_at") or (latest.bucket_at.isoformat() if latest else None),
         "bestBid": extra.get("best_bid"),
@@ -60,7 +96,7 @@ def importance_label(score: float) -> str:
         return "핵심"
     if score >= 0.68:
         return "중요"
-    return "관찰"
+    return "관심"
 
 
 def theme_card(theme: Theme) -> dict:
@@ -80,6 +116,11 @@ def theme_card(theme: Theme) -> dict:
 
 
 def news_card(article: Article) -> dict:
+    ordered_links = sorted(
+        article.stock_links,
+        key=lambda item: (item.relevance_score, item.upside_score),
+        reverse=True,
+    )
     return {
         "id": str(article.id),
         "title": article.title,
@@ -93,6 +134,7 @@ def news_card(article: Article) -> dict:
         "sentimentScore": round(article.sentiment_score, 4),
         "importanceLabel": importance_label(article.relevance_score),
         "url": article.url,
+        "linkedStocks": [{"ticker": link.stock.ticker, "nameKo": link.stock.name_ko} for link in ordered_links[:3]],
     }
 
 
@@ -121,12 +163,13 @@ def ranking_entry(item: dict, stock_map: dict[str, Stock]) -> dict:
         "relevanceScore": round(item.get("relevance_score", 0.0), 4),
         "upsideScore": round(item.get("upside_score", 0.0), 4),
         "confidence": round(item.get("confidence", 0.0), 4),
-        "thesis": item.get("reasons", ["관련성 기반 수혜 가능성"])[0],
+        "thesis": item.get("reasons", ["뉴스·테마 연결 강도가 높은 후보입니다."])[0],
         "reasons": item.get("reasons", []),
     }
 
 
 def forecast_widget(forecast: Forecast | None) -> dict:
+    disclaimer = "예측은 확률적 추정치이며, 확정적 투자 조언이나 수익 보장을 의미하지 않습니다."
     if forecast is None:
         now = datetime.utcnow().isoformat()
         return {
@@ -138,7 +181,7 @@ def forecast_widget(forecast: Forecast | None) -> dict:
             "closeBand": {"low": 0, "base": 0, "high": 0},
             "intradayOutlook": [],
             "confidence": 0.32,
-            "disclaimer": "예측은 확률적 추정치이며 확정적 투자 조언이 아닙니다.",
+            "disclaimer": disclaimer,
         }
 
     return {
@@ -154,7 +197,7 @@ def forecast_widget(forecast: Forecast | None) -> dict:
         },
         "intradayOutlook": forecast.intraday_path,
         "confidence": round(min((forecast.direction_up_prob + forecast.direction_flat_prob) / 1.3, 0.97), 4),
-        "disclaimer": "예측은 확률적 추정치이며 확정적 투자 조언이 아닙니다.",
+        "disclaimer": disclaimer,
     }
 
 
@@ -168,8 +211,10 @@ def explanation_card(card: ExplanationCard) -> dict:
     }
 
 
-def price_series(stock: Stock) -> list[dict]:
-    ordered = sorted(stock.prices, key=lambda item: item.bucket_at)
+def price_series(stock: Stock, timeframe: str | None = None) -> list[dict]:
+    grouped = _group_prices_by_timeframe(stock)
+    selected_timeframe = timeframe or default_chart_timeframe(stock)
+    rows = grouped.get(selected_timeframe, [])
     return [
         {
             "time": candle.bucket_at.isoformat(),
@@ -179,7 +224,7 @@ def price_series(stock: Stock) -> list[dict]:
             "close": round(candle.close, 2),
             "volume": candle.volume,
         }
-        for candle in ordered
+        for candle in rows
     ]
 
 

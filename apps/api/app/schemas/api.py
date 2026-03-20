@@ -32,6 +32,7 @@ class NewsCardSchema(BaseModel):
     sentimentScore: float
     importanceLabel: str
     url: str
+    linkedStocks: list[dict]
 
 
 class RankingEntrySchema(BaseModel):
@@ -136,6 +137,25 @@ class PricePointSchema(BaseModel):
     volume: int
 
 
+class StockListItemSchema(BaseModel):
+    ticker: str
+    nameKo: str
+    market: str
+    sector: str
+    currentPrice: float
+    dayChangePct: float
+    themes: list[str]
+
+
+class StockChartResponseSchema(BaseModel):
+    ticker: str
+    timeframe: str
+    source: str
+    updatedAt: str | None = None
+    availableTimeframes: list[str]
+    points: list[PricePointSchema]
+
+
 class StockDetailResponseSchema(BaseModel):
     ticker: str
     nameKo: str
@@ -154,10 +174,19 @@ class StockDetailResponseSchema(BaseModel):
     priceTimeframe: str
     priceSource: str
     priceUpdatedAt: str | None = None
+    chartTimeframes: list[str]
+    defaultChartTimeframe: str
     bestBid: float | None = None
     bestAsk: float | None = None
     timeline: list[TimelineItemSchema]
     priceSeries: list[PricePointSchema]
+
+
+class LiveNewsResponseSchema(BaseModel):
+    generatedAt: str
+    pollingIntervalMs: int
+    themeSlug: str | None = None
+    items: list[NewsCardSchema]
 
 
 class PipelineProviderStatusSchema(BaseModel):

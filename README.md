@@ -1,355 +1,236 @@
 # NewsAlpha
 
-한국 주식 뉴스 기반 매매 보조를 위한 풀스택 MVP입니다.  
-국내/해외 뉴스를 수집하고, 주식 관련성 필터를 거쳐 투자 테마로 분류한 뒤, 한국 상장 종목과 연결하여 상위 수혜 종목 랭킹, 설명 카드, 단기 확률형 예측 위젯까지 제공합니다.
+한국 주식 투자 보조를 위한 실시간 뉴스·테마·종목·차트·예측 웹 플랫폼 MVP입니다.
 
-주요 목표:
-- 한국 주식을 우선 대상으로 삼는다.
-- 미국/해외 뉴스도 반영하되 한국어 번역 요약과 국내 영향 해석을 함께 제공한다.
-- 뉴스 나열이 아니라 `뉴스 -> 테마 -> 종목 -> 예측 -> 설명` 흐름을 완결한다.
-- 모든 예측은 확률 기반 보조 정보로 표시하며 투자 조언처럼 보이지 않게 설계한다.
+이 저장소는 `mock-first` 방식으로 구성되어 있습니다. 실뉴스 API 키가 없어도 로컬에서 전체 흐름을 바로 확인할 수 있고, 이후 뉴스 provider와 시세 adapter만 교체하면 실제 데이터로 확장할 수 있습니다.
 
-## 스크린샷
+## 핵심 가치
 
-![Dashboard](docs/screenshots/dashboard.svg)
-![Stock Detail](docs/screenshots/stock-detail.svg)
+- 실시간 주식 관련 뉴스 피드가 가장 앞에 온다.
+- 접속 중 새 뉴스가 자동 반영된다.
+- 뉴스별 테마와 관련 종목을 함께 보여준다.
+- 종목 상세에서 다중 타임프레임 차트와 확률형 예측 밴드를 제공한다.
+- 예측은 투자 조언이 아니라 설명 가능한 확률 추정치로 표현한다.
+
+## 현재 MVP 범위
+
+- 한국/해외 mock 뉴스 수집
+- 주식 관련성 필터
+- 테마 분류
+- 뉴스-종목 연결
+- 대시보드 실시간 뉴스 스트림
+- 테마별 뉴스 필터
+- 종목 검색
+- 종목 상세 차트 `1m / 1d / 1w / 1mo`
+- 종가 예측 밴드와 단기 방향성 위젯
+- 운영 상태 페이지
+- 모델 평가 페이지
+
+## 실시간 뉴스 갱신 방식
+
+실시간 반영은 WebSocket 대신 짧은 주기 polling으로 구현했습니다.
+
+- 프론트엔드는 `10초` 간격으로 `GET /api/v1/articles/live` 를 호출합니다.
+- 백엔드는 live feed 요청 시 ingest를 `15초` 단위로 제한해 과도한 재수집을 막습니다.
+- mock 모드에서는 `seed/reset` 직후 기사 6건으로 시작하고, `20초`마다 국내/해외 기사 1건씩 추가되어 사용자가 페이지를 새로고침하지 않아도 새 뉴스가 위로 올라옵니다.
+
+선택 이유:
+
+- MVP 단계에서 운영 복잡도가 가장 낮습니다.
+- 브라우저/프록시 환경 제약이 적습니다.
+- 이후 SSE나 WebSocket으로 교체해도 API 경계를 크게 바꾸지 않아도 됩니다.
 
 ## 기술 스택
 
-- Frontend: Next.js, TypeScript, Tailwind CSS, shadcn/ui 스타일 컴포넌트
-- Backend: FastAPI, SQLAlchemy, Celery
+- Frontend: Next.js 14, TypeScript, Tailwind CSS
+- Backend: FastAPI, SQLAlchemy
 - Data: PostgreSQL, Redis, pgvector
 - ML: pandas, polars, scikit-learn, LightGBM, PyTorch
-- Repo: polyglot monorepo
+- Monorepo: `apps/`, `packages/`, `ml/`, `infra/`
 
-## 디렉터리 구조
+## 폴더 구조
 
 ```text
 apps/
-  api/      FastAPI 백엔드, 시드, 파이프라인, 테스트
-  web/      Next.js 앱, 대시보드/상세 페이지
+  api/      FastAPI 백엔드, 스키마, 저장소, 파이프라인, 테스트
+  web/      Next.js 앱, 대시보드/뉴스/테마/종목 페이지
 packages/
-  shared/   공용 타입, 포맷터, mock seed JSON
-ml/         베이스라인 모델, 피처 빌더, 평가 리포트
-infra/      docker-compose, Dockerfiles, env 템플릿, 실행 스크립트
-docs/       설계 문서와 스크린샷
+  shared/   공용 타입, 포맷터, mock seed 데이터
+ml/         베이스라인 모델, 피처 빌더, 평가 코드
+infra/      선택적 Docker 설정과 실행 스크립트
+docs/       구현 계획, 검증 노트, 스크린샷
 ```
 
-초기 설계 문서는 [docs/implementation-plan.md](docs/implementation-plan.md) 에 있습니다.
+상세 설계 문서:
 
-## 아키텍처
-
-```mermaid
-flowchart LR
-    A["Mock / Future Providers"] --> B["Ingestion Pipeline"]
-    B --> C["Normalizer + Deduper"]
-    C --> D["Relevance Filter"]
-    D --> E["Theme Classifier"]
-    E --> F["Entity Linker"]
-    F --> G["Ranking Engine"]
-    G --> H["Forecast Engine"]
-    H --> I["Explanation Engine"]
-    I --> J["PostgreSQL + pgvector"]
-    J --> K["FastAPI Read APIs"]
-    K --> L["Next.js Dashboard"]
-    B --> M["Celery Worker / Redis"]
-```
-
-### 구현 트레이드오프
-
-- 실시간 API 대신 mock-first 설계를 채택했다.
-  이유: 초기 단계에서 전체 사용자 흐름을 안정적으로 검증하고, 나중에 provider adapter만 교체하기 위함.
-- 단일 거대 모델 대신 분리형 모듈을 사용했다.
-  이유: 관련성 필터, 테마 분류, 랭킹, 예측을 독립적으로 교체/평가하기 쉽다.
-- 백엔드는 PostgreSQL/pgvector 경로를 유지하되 테스트는 SQLite에서도 생성 가능한 타입으로 설계했다.
-  이유: CI/로컬에서 빠른 테스트를 허용하면서 프로덕션 스택 요구사항을 유지하기 위함.
-- 프론트엔드는 서버 컴포넌트 중심으로 구성하고 차트/운영 액션만 클라이언트 컴포넌트로 남겼다.
-  이유: 데이터 읽기 흐름을 단순화하고 초기 성능과 구조를 안정적으로 유지하기 위함.
-
-## 기능 요약
-
-### 1. 뉴스 수집 및 정제 파이프라인
-
-- 국내/해외 provider 인터페이스 분리
-- 정규화와 dedupe hash 기반 중복 제거
-- 주식 관련성 필터
-- 멀티라벨 테마 분류
-- 기사 클러스터 생성
-- 한국 종목 연결과 설명 카드 생성
-- PostgreSQL 저장
-
-### 2. 종목 연결 및 랭킹
-
-- 종목 마스터와 테마 링크 테이블
-- 기사 엔티티 -> 국내 상장 종목 매핑
-- 기사/클러스터/대시보드 스냅샷 랭킹
-- 상승 잠재 관련성 점수 기반 Top 10 출력
-
-### 3. 예측 위젯
-
-- 단기 방향성 확률
-- 종가 밴드
-- 장중 시간 구간별 전망
-- 설명 가능한 feature snapshot
-- 확률 기반 보조 정보라는 고지 문구 포함
-
-### 4. 운영/리뷰 화면
-
-- 파이프라인 상태 페이지
-- mock ingest 재실행/리셋 버튼
-- 내부 모델 평가 페이지
+- [docs/implementation-plan.md](docs/implementation-plan.md)
+- [docs/verification-notes.md](docs/verification-notes.md)
 
 ## 주요 페이지
 
-- `/` 대시보드 홈
+- `/` 대시보드
+- `/articles` 실시간 뉴스 피드
 - `/themes` 테마 목록
 - `/themes/[slug]` 테마 상세
-- `/articles` 필터링된 뉴스 목록
-- `/articles/[id]` 기사 상세
-- `/stocks` 관찰 종목 목록
-- `/stocks/[ticker]` 종목 상세, 차트, 예측, 타임라인
+- `/articles/[id]` 뉴스 상세
+- `/stocks` 종목 검색
+- `/stocks/[ticker]` 종목 상세
 - `/admin/ops` 운영 상태
 - `/admin/evals` 모델 평가
 
-## API 개요
-
-### Public
+## 주요 API
 
 - `GET /api/v1/health`
 - `GET /api/v1/dashboard`
+- `GET /api/v1/articles`
+- `GET /api/v1/articles/live`
+- `GET /api/v1/articles/{article_id}`
 - `GET /api/v1/themes`
 - `GET /api/v1/themes/{theme_slug}`
-- `GET /api/v1/articles`
-- `GET /api/v1/articles/{article_id}`
-- `GET /api/v1/clusters`
-- `GET /api/v1/clusters/{cluster_id}`
 - `GET /api/v1/stocks`
 - `GET /api/v1/stocks/{ticker}`
+- `GET /api/v1/stocks/{ticker}/chart`
 - `GET /api/v1/stocks/{ticker}/forecast`
 - `GET /api/v1/stocks/{ticker}/timeline`
-
-### Admin
-
 - `GET /api/v1/admin/pipeline-status`
 - `POST /api/v1/admin/ingest/run`
 - `POST /api/v1/admin/seed/reset`
-- `GET /api/v1/admin/evaluations`
-- `GET /api/v1/admin/evaluations/{model_name}`
 
 ## 데이터 모델
 
-핵심 테이블:
+현재 구현 기준 핵심 엔티티:
 
 - `articles`
 - `article_clusters`
 - `themes`
+- `article_theme_links`
 - `stocks`
 - `stock_theme_links`
 - `stock_news_links`
+- `market_prices`
 - `forecasts`
 - `ranking_snapshots`
 - `explanation_cards`
-- `market_prices`
 - `foreign_news_impacts`
-
-세부 설계는 [docs/implementation-plan.md](docs/implementation-plan.md) 에 정리되어 있습니다.
 
 ## 로컬 실행
 
-### 사전 준비
-
-- Docker Desktop 또는 Docker Engine
-- `docker compose` 명령 사용 가능 환경
-- Windows 의 경우 WSL2 및 가상화가 활성화된 상태 권장
-
-### 1. 환경 변수 준비
-
-```bash
-cp .env.example .env
-```
-
-Windows PowerShell에서는 다음처럼 복사해도 됩니다.
+### 1. Python 가상환경과 의존성 설치
 
 ```powershell
-Copy-Item .env.example .env
+.\.venv\Scripts\python.exe -m pip install -e .\apps\api[dev]
+.\.venv\Scripts\python.exe -m pip install -e .\ml[dev]
 ```
 
-### 2. 전체 스택 실행
+루트에서 프론트 의존성 설치:
 
-```bash
-docker compose -f infra/docker-compose.yml up --build
+```powershell
+npm install
 ```
 
-실행 후 접속:
+`npm` 이 PATH에 없으면 Visual Studio 번들 Node를 사용해도 됩니다.
+
+```powershell
+$env:Path='C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VisualStudio\NodeJs;'+$env:Path
+npm.cmd install
+```
+
+### 2. 로컬 API 환경 변수
+
+API 로컬 실행은 [`apps/api/.env`](apps/api/.env) 를 기준으로 합니다.
+
+기본값:
+
+```env
+DATABASE_URL=sqlite+pysqlite:///./newsalpha.db
+REDIS_URL=redis://localhost:6379/0
+ENABLE_MOCK_SEED_ON_STARTUP=true
+LOG_LEVEL=INFO
+NEWS_PROVIDER_MODE=mock
+MARKET_DATA_PROVIDER_MODE=mock
+```
+
+### 3. API 실행
+
+```powershell
+cd .\apps\api
+..\..\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+위 경로가 불편하면 루트에서 아래처럼 실행해도 됩니다.
+
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir .\apps\api --host 127.0.0.1 --port 8000
+```
+
+### 4. 웹 실행
+
+```powershell
+$env:API_BASE_URL='http://127.0.0.1:8000'
+$env:NEXT_PUBLIC_API_BASE_URL='http://127.0.0.1:8000'
+npm --workspace apps/web run dev
+```
+
+`npm` 이 PATH에 없으면:
+
+```powershell
+$env:Path='C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VisualStudio\NodeJs;'+$env:Path
+$env:API_BASE_URL='http://127.0.0.1:8000'
+$env:NEXT_PUBLIC_API_BASE_URL='http://127.0.0.1:8000'
+npm.cmd --workspace apps/web run dev
+```
+
+### 5. 접속 주소
 
 - Web: [http://localhost:3000](http://localhost:3000)
 - API Docs: [http://localhost:8000/docs](http://localhost:8000/docs)
 - API Health: [http://localhost:8000/api/v1/health](http://localhost:8000/api/v1/health)
 
-### 3. 운영 액션
+## 운영 액션
 
-mock ingest 재실행:
-
-```bash
-curl -X POST http://localhost:8000/api/v1/admin/ingest/run
-```
-
-시드 리셋:
-
-```bash
-curl -X POST http://localhost:8000/api/v1/admin/seed/reset
-```
-
-PowerShell 스크립트:
+mock 뉴스 추가 ingest:
 
 ```powershell
-./infra/scripts/dev.ps1
-./infra/scripts/seed.ps1
+curl.exe -X POST http://127.0.0.1:8000/api/v1/admin/ingest/run
 ```
 
-## 개발 모드
-
-### Backend
-
-```bash
-cd apps/api
-pip install -e .[dev]
-uvicorn app.main:app --reload
-```
-
-Windows 가상환경 예시:
+mock 피드를 처음 상태로 리셋:
 
 ```powershell
-.\.venv\Scripts\python.exe -m pip install -e .\apps\api[dev]
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --app-dir .\apps\api --reload
-```
-
-### Frontend
-
-```bash
-npm install
-npm --workspace apps/web run dev
-```
-
-### ML
-
-```bash
-cd ml
-pip install -e .[dev]
-python scripts/train_baselines.py
-python scripts/evaluate_models.py
-```
-
-Windows 가상환경 예시:
-
-```powershell
-.\.venv\Scripts\python.exe -m pip install -e .\ml[dev]
-.\.venv\Scripts\python.exe .\ml\scripts\train_baselines.py
-.\.venv\Scripts\python.exe .\ml\scripts\evaluate_models.py
+curl.exe -X POST http://127.0.0.1:8000/api/v1/admin/seed/reset
 ```
 
 ## 테스트
 
-### Backend
-
-```bash
-cd apps/api
-pytest
-```
-
-Windows:
+API:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -p no:cacheprovider .\apps\api
 ```
 
-### ML
-
-```bash
-cd ml
-pytest
-```
-
-Windows:
+ML:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -p no:cacheprovider .\ml
 ```
 
-루트에서 실행:
-
-```bash
-npm run test:api
-npm run test:ml
-```
-
-## Mock 데이터 흐름
-
-현재 mock seed는 다음 흐름을 보장합니다.
-
-1. 해외 AI/HBM 기사 -> AI 인프라 테마 -> SK하이닉스/한미반도체/이수페타시스 연결
-2. 전력망/HVDC 기사 -> 전력망·원전 테마 -> LS ELECTRIC/HD현대일렉트릭/두산에너빌리티 연결
-3. 유럽 방산 기사 -> 방산·우주 테마 -> 한화에어로스페이스/LIG넥스원 연결
-4. 미국 ESS 기사 -> 2차전지 + 전력기기 파급 해석
-5. 각 종목 상세 페이지에서 예측 위젯, 근거 카드, 타임라인 표시
-
-## 실제 데이터 교체 지점
-
-### TODO: 실뉴스 Provider Adapter
-
-- `apps/api/app/services/pipeline/providers/base.py`
-- 현재 `mock_domestic.py`, `mock_foreign.py` 를 실제 뉴스 API adapter로 교체 가능
-
-### TODO: 실시간 시세/호가 Adapter
-
-- `apps/api/app/services/pipeline/forecaster.py`
-- 현재 mock 가격 시계열을 실제 국내 시세 API 또는 유료 데이터 피드로 교체 가능
-
-### TODO: 공시/정책 데이터 Adapter
-
-- 엔티티 링커와 랭킹 피처에 공시, 정책 발표, 수주 공시를 결합할 수 있음
-
-### TODO: 임베딩 생성기
-
-- `articles.embedding` 은 현재 mock vector
-- 실제 multilingual embedding 또는 금융 도메인 임베딩으로 교체 가능
-
-## 구현 상태
-
-- 모노레포 구조 완료
-- FastAPI + SQLAlchemy + seed pipeline 완료
-- Next.js 대시보드/상세 화면 완료
-- PostgreSQL + Redis + worker Docker stack 완료
-- ML baseline package 및 평가 리포트 완료
-- README, env template, scripts 완료
-
-## 참고
-
-- 설계 기준점: [docs/implementation-plan.md](docs/implementation-plan.md)
-- 공용 mock 데이터: [packages/shared/data/mock-seed.json](packages/shared/data/mock-seed.json)
-- 백엔드 진입점: [apps/api/app/main.py](apps/api/app/main.py)
-- 프론트엔드 진입점: [apps/web/app/page.tsx](apps/web/app/page.tsx)
-
-## Windows Docker Preflight
-
-Windows에서 `docker compose`가 바로 실행되지 않으면 먼저 아래 점검 스크립트를 실행하세요.
+Web:
 
 ```powershell
-.\infra\scripts\windows-preflight.ps1
+npm --workspace apps/web run typecheck
+npm --workspace apps/web run lint
+npm --workspace apps/web run build
 ```
 
-WSL 또는 Docker Desktop이 없다고 나오면 관리자 권한 PowerShell에서 아래 스크립트를 실행합니다.
+## 실제 데이터 교체 포인트
 
-```powershell
-.\infra\scripts\windows-enable-docker-prereqs.ps1 -InstallDockerDesktop
-```
+- 뉴스 provider: `apps/api/app/services/pipeline/providers/`
+- 시세 adapter: `apps/api/app/services/market_data.py`
+- 예측/피처 로직: `apps/api/app/services/pipeline/forecaster.py`
+- 공용 mock 데이터: `packages/shared/data/mock-seed.json`
 
-첫 실행에서 Windows 기능 활성화만 끝나고 재부팅을 요구할 수 있습니다. 그 경우 재부팅 후 같은 명령을 한 번 더 실행하면 됩니다.
+## 주의 사항
 
-재부팅 후 전체 스택은 다시 아래처럼 실행하면 됩니다.
-
-```powershell
-.\infra\scripts\dev.ps1
-```
-
-자세한 Windows 복구 절차는 [docs/windows-docker-troubleshooting.md](docs/windows-docker-troubleshooting.md)에 정리했습니다.
+- 이 저장소는 현재 mock 중심 MVP입니다. 실거래용 판단 근거로 사용하면 안 됩니다.
+- 예측 수치는 확률적 추정치이며, 수익 보장이나 확정적 투자 조언이 아닙니다.
+- Docker 설정은 선택 사항이며, 로컬 개발 서버만으로도 전체 흐름을 확인할 수 있습니다.

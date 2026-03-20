@@ -26,9 +26,14 @@ class DashboardService:
 
         market_summary = [
             {"label": "활성 테마", "value": f"{len(themes)}개", "change": None, "tone": "positive"},
-            {"label": "해외 파급 기사", "value": f"{foreign_articles}건", "change": "미국 뉴스 포함", "tone": "neutral"},
-            {"label": "상위 종목 평균", "value": f"{avg_move:+.1f}%", "change": "최근 5개 기준", "tone": "positive" if avg_move >= 0 else "negative"},
-            {"label": "필터 통과율", "value": f"{relevance_rate:.1f}%", "change": "주식 관련성 기준", "tone": "neutral"},
+            {"label": "해외 뉴스", "value": f"{foreign_articles}건", "change": "미국·글로벌 기사 포함", "tone": "neutral"},
+            {
+                "label": "상위 종목 평균",
+                "value": f"{avg_move:+.1f}%",
+                "change": "상위 5개 등락률",
+                "tone": "positive" if avg_move >= 0 else "negative",
+            },
+            {"label": "주식 관련성", "value": f"{relevance_rate:.1f}%", "change": "필터 통과 기사 비중", "tone": "neutral"},
         ]
 
         return DashboardResponseSchema(

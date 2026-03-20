@@ -31,4 +31,3 @@ export function ClusterStrip({ clusters }: { clusters: ArticleClusterCard[] }) {
     </Card>
   );
 }
-

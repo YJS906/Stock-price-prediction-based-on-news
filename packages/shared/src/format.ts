@@ -29,4 +29,3 @@ export function toConfidenceLabel(score: number): string {
   if (score >= 0.68) return "보통";
   return "탐색";
 }
-

@@ -22,7 +22,7 @@ export function ForecastChart({ forecast }: { forecast: ForecastWidget }) {
       },
       yAxis: {
         type: "category",
-        data: ["상승", "중립", "하락"],
+        data: ["상승", "보합", "하락"],
         axisLabel: { color: "#e2e8f0" }
       },
       series: [
@@ -49,4 +49,3 @@ export function ForecastChart({ forecast }: { forecast: ForecastWidget }) {
 
   return <ReactECharts option={option} style={{ height: 180, width: "100%" }} />;
 }
-
