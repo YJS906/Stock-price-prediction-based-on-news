@@ -14,7 +14,14 @@ import { BRAND_NAME } from "@/lib/brand";
 import { getDashboard } from "@/lib/api";
 
 export default async function DashboardPage() {
-  const dashboard = await getDashboard();
+  const dashboard = await getDashboard().catch(() => ({
+    generatedAt: new Date().toISOString(),
+    marketSummary: [],
+    topThemes: [],
+    latestNews: [],
+    featuredRanking: [],
+    hotClusters: []
+  }));
 
   return (
     <div className="space-y-8">

@@ -54,6 +54,7 @@ class LiveFeedService:
                 self.seed_service.refresh_news(self.db)
             except Exception:
                 # Keep the live feed readable even if a provider fetch fails.
+                self.db.rollback()
                 return
 
     def _content_mode(self, items: list[dict]) -> str:

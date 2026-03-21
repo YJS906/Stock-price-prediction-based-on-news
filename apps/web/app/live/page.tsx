@@ -3,7 +3,21 @@ import { SectionHeading } from "@/components/dashboard/section-heading";
 import { getLiveArticles, getThemes } from "@/lib/api";
 
 export default async function LivePage() {
-  const [feed, themes] = await Promise.all([getLiveArticles(undefined, 40), getThemes()]);
+  const [feedResult, themesResult] = await Promise.allSettled([getLiveArticles(undefined, 40), getThemes()]);
+  const feed =
+    feedResult.status === "fulfilled"
+      ? feedResult.value
+      : {
+          generatedAt: null,
+          pollingIntervalMs: 10000,
+          newestPublishedAt: null,
+          themeSlug: null,
+          timezone: "Asia/Seoul",
+          connectionMode: "polling" as const,
+          contentMode: "hybrid" as const,
+          items: []
+        };
+  const themes = themesResult.status === "fulfilled" ? themesResult.value : [];
 
   return (
     <section className="space-y-6">

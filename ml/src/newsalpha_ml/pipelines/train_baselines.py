@@ -1,11 +1,14 @@
 from newsalpha_ml.datasets.mock_data import load_seed_articles
+from newsalpha_ml.datasets.us_spillover_data import load_mock_us_spillover_pairs
 from newsalpha_ml.features.forecast_features import build_forecast_frame
 from newsalpha_ml.features.news_features import build_relevance_frame, build_theme_frame
 from newsalpha_ml.features.ranking_features import build_ranking_frame
+from newsalpha_ml.features.us_spillover_features import build_us_spillover_frame
 from newsalpha_ml.models.forecast_model import ForecastModel
 from newsalpha_ml.models.ranking_model import RankingModel
 from newsalpha_ml.models.relevance_model import RelevanceModel
 from newsalpha_ml.models.theme_model import ThemeModel
+from newsalpha_ml.models.us_spillover_model import UsSpilloverModel
 
 
 def train_all_baselines() -> dict:
@@ -23,10 +26,14 @@ def train_all_baselines() -> dict:
     forecast_X, forecast_y = build_forecast_frame(df)
     forecast_model = ForecastModel().fit(forecast_X, forecast_y)
 
+    spillover_df = load_mock_us_spillover_pairs()
+    spillover_X, spillover_y = build_us_spillover_frame(spillover_df)
+    spillover_model = UsSpilloverModel().fit(spillover_X, spillover_y)
+
     return {
       "stock-relevance": relevance_model.evaluate(relevance_X, relevance_y),
       "theme-classifier": theme_model.evaluate(theme_X, theme_y),
       "stock-ranking": ranking_model.evaluate(ranking_X, ranking_y),
       "short-horizon-forecast": forecast_model.evaluate(forecast_X, forecast_y),
+      "us-to-krx-spillover": spillover_model.evaluate(spillover_X, spillover_y),
     }
-
